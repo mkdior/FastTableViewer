@@ -250,7 +250,9 @@ func openFileSource(fn string) (loadSource, error) {
 		return loadSource{}, err
 	}
 	var fileSize int64
-	if !fileInfo.IsDir() {
+	// The uncompressed size of a gzip file is unknown, so leave it at 0 and
+	// let the UI fall back to a row counter instead of a bogus percentage.
+	if !fileInfo.IsDir() && !strings.HasSuffix(fn, ".gz") {
 		fileSize = fileInfo.Size()
 	}
 	scanner, err := getFileScanner(fn)
