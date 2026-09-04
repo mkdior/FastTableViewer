@@ -2,6 +2,7 @@ package main
 
 import (
 	"sync/atomic"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -49,7 +50,7 @@ var originalBuffer *Buffer              // Store original buffer before filterin
 var isFiltered bool                     // Track if filter is active
 var activeFilters map[int]FilterOptions // Track active filters: column -> query
 var currentCursorColumn int             // Track current cursor column position
-var lastKeyWasG bool                    // Track if last key pressed was 'g' for gg navigation
+var lastGPress time.Time                // Time of the last 'g' press, for the gg chord
 
 // LoadProgress tracks loading progress. It is written by the loader goroutine
 // and read by the UI ticker, so the fields are atomic.
@@ -99,7 +100,7 @@ func initView() {
 	isFiltered = false
 	activeFilters = make(map[int]FilterOptions) // Initialize active filters map
 	currentCursorColumn = 0                     // Initialize cursor column
-	lastKeyWasG = false                         // Initialize vim navigation state
+	lastGPress = time.Time{}                    // Initialize vim navigation state
 }
 
 // stop UI

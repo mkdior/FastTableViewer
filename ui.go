@@ -155,6 +155,20 @@ func drawBuffer(b *Buffer, t *tview.Table) {
 	t.SetContent(&bufferContent{b: b})
 }
 
+// ggTimeout is how long after one 'g' a second 'g' still counts as the gg chord.
+const ggTimeout = 500 * time.Millisecond
+
+// secondGPress records a 'g' key press and reports whether it completes a gg
+// chord. State lives in a timestamp so no goroutine is needed to expire it.
+func secondGPress() bool {
+	if !lastGPress.IsZero() && time.Since(lastGPress) < ggTimeout {
+		lastGPress = time.Time{}
+		return true
+	}
+	lastGPress = time.Now()
+	return false
+}
+
 // halfPageRows returns half the number of rows the table can show, at least 1.
 func halfPageRows(t *tview.Table) int {
 	_, _, _, height := t.GetInnerRect()
@@ -333,18 +347,10 @@ func drawUI(b *Buffer) error {
 
 		// gg - go to first row
 		if event.Key() == tcell.KeyRune && event.Rune() == 'g' {
-			if lastKeyWasG {
+			if secondGPress() {
 				bufferTable.Select(0, 0)
 				bufferTable.ScrollToBeginning()
-				lastKeyWasG = false
-				return nil
 			}
-			lastKeyWasG = true
-			// Set a timer to reset lastKeyWasG after a short delay
-			go func() {
-				time.Sleep(500 * time.Millisecond)
-				lastKeyWasG = false
-			}()
 			return nil
 		}
 
@@ -996,16 +1002,9 @@ func showHelpDialog() {
 		}
 		// gg - go to top
 		if event.Key() == tcell.KeyRune && event.Rune() == 'g' {
-			if lastKeyWasG {
+			if secondGPress() {
 				helpText.ScrollToBeginning()
-				lastKeyWasG = false
-				return nil
 			}
-			lastKeyWasG = true
-			go func() {
-				time.Sleep(500 * time.Millisecond)
-				lastKeyWasG = false
-			}()
 			return nil
 		}
 		// G - go to bottom
@@ -1099,18 +1098,11 @@ func showStatsDialog(statsS statsSummary, columnName string, colType int) {
 
 		// gg - go to top
 		if event.Key() == tcell.KeyRune && event.Rune() == 'g' {
-			if lastKeyWasG {
+			if secondGPress() {
 				_, column := statsTable.GetSelection()
 				statsTable.Select(0, column)
 				statsTable.ScrollToBeginning()
-				lastKeyWasG = false
-				return nil
 			}
-			lastKeyWasG = true
-			go func() {
-				time.Sleep(500 * time.Millisecond)
-				lastKeyWasG = false
-			}()
 			return nil
 		}
 
