@@ -245,8 +245,13 @@ func TestCellsArePaddedToColumnWidth(t *testing.T) {
 	if got := c.GetCell(0, 1).Text; !strings.HasPrefix(got, " ") || !strings.HasSuffix(got, " ") || displayWidth(got) != want {
 		t.Errorf("header must be centred within the column width, got %q", got)
 	}
-	if c.GetCell(1, 1) != c.GetCell(1, 1) {
+	first := c.GetCell(1, 1)
+	if c.GetCell(1, 1) != first {
 		t.Error("cells must be cached within a frame")
+	}
+	c.beginFrame()
+	if c.GetCell(1, 1) == first {
+		t.Error("beginFrame must drop the cached cells")
 	}
 	c.beginFrame()
 	wrappedColumns = map[int]int{1: 10}
