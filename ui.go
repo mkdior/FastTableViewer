@@ -813,6 +813,7 @@ func drawUI(b *Buffer) error {
 			}
 			drawBuffer(b, bufferTable)
 			drawFooterText(fileNameStr, "All Done", cursorPosStr)
+			return nil
 		}
 
 		// S - sort by column, descending (capital S for reverse sort)
@@ -831,6 +832,7 @@ func drawUI(b *Buffer) error {
 			}
 			drawBuffer(b, bufferTable)
 			drawFooterText(fileNameStr, "All Done", cursorPosStr)
+			return nil
 		}
 
 		// i - show stats info for current column
@@ -888,6 +890,7 @@ func drawUI(b *Buffer) error {
 			b.setColType(column, newType)
 			cursorPosStr = buildCursorPosStr(row, column)
 			drawFooterText(fileNameStr, statusMessage, cursorPosStr)
+			return nil
 		}
 
 		// W - toggle text wrapping for current column (capital W for wrap)
