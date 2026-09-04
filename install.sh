@@ -53,6 +53,7 @@ main() {
     version=$(get_latest_release)
     if [ -z "$version" ]; then
         echo "Error: Could not determine latest version" >&2
+        echo "The releases API returned nothing; the repository may be private or unreachable." >&2
         exit 1
     fi
     echo "Latest version: v$version"
