@@ -196,3 +196,31 @@ func TestBuffer_filterByColumn_EdgeCases(t *testing.T) {
 		}
 	})
 }
+
+func TestEvaluateFilter_Operators(t *testing.T) {
+	tests := []struct {
+		name    string
+		cell    string
+		opts    FilterOptions
+		colType int
+		want    bool
+	}{
+		{"regex is case-insensitive by default", "ERROR: disk", FilterOptions{Query: "^error", Operator: "regex"}, colTypeStr, true},
+		{"regex honours case sensitivity", "ERROR: disk", FilterOptions{Query: "^error", Operator: "regex", CaseSensitive: true}, colTypeStr, false},
+		{"invalid regex never matches", "anything", FilterOptions{Query: "[unclosed", Operator: "regex"}, colTypeStr, false},
+		{"numeric > on string-typed column still compares numerically", "42", FilterOptions{Query: "40", Operator: ">"}, colTypeStr, true},
+		{"numeric > excludes unparseable cells", "n/a", FilterOptions{Query: "40", Operator: ">"}, colTypeFloat, false},
+		{"numeric with thousands separator", "1,500", FilterOptions{Query: "1000", Operator: ">="}, colTypeFloat, true},
+		{"numeric with non-numeric threshold never matches", "5", FilterOptions{Query: "abc", Operator: "<"}, colTypeFloat, false},
+		{"date column compares chronologically", "2024-03-01", FilterOptions{Query: "2024-01-15", Operator: ">"}, colTypeDate, true},
+		{"date column excludes unparseable cells", "unknown", FilterOptions{Query: "2024-01-15", Operator: ">"}, colTypeDate, false},
+		{"empty operator defaults to contains", "Hello World", FilterOptions{Query: "world"}, colTypeStr, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := evaluateFilter(tt.cell, tt.opts, tt.colType); got != tt.want {
+				t.Errorf("evaluateFilter(%q, %+v) = %v, want %v", tt.cell, tt.opts, got, tt.want)
+			}
+		})
+	}
+}

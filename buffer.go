@@ -804,6 +804,118 @@ type FilterOptions struct {
 	CaseSensitive bool
 }
 
+// numericOperators are the filter operators that compare values as numbers (or dates on date columns).
+var numericOperators = map[string]bool{">": true, "<": true, ">=": true, "<=": true}
+
+// parseNumberStrict parses a cell as a float64, tolerating thousands separators
+// and underscores. Unlike parseNumericValueFast it reports failure instead of
+// returning 0, so unparseable cells can be excluded rather than treated as zero.
+func parseNumberStrict(s string) (float64, bool) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return 0, false
+	}
+	if strings.ContainsAny(s, ",_") {
+		s = strings.NewReplacer(",", "", "_", "").Replace(s)
+	}
+	v, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return 0, false
+	}
+	return v, true
+}
+
+// compiledFilter is a FilterOptions prepared once so it can be evaluated
+// against every row without recompiling regexes or reparsing thresholds.
+type compiledFilter struct {
+	operator  string
+	query     string // lower-cased when the filter is case-insensitive
+	caseSens  bool
+	re        *regexp.Regexp // set for the regex operator
+	threshold float64        // parsed query for numeric/date operators
+	asDate    bool           // compare as dates rather than numbers
+	valid     bool           // false when the query is unusable (bad regex, non-numeric threshold)
+}
+
+// compileFilter prepares options for repeated evaluation against a column of the given type.
+func compileFilter(options FilterOptions, colType int) compiledFilter {
+	f := compiledFilter{operator: options.Operator, query: options.Query, caseSens: options.CaseSensitive, valid: true}
+
+	switch {
+	case numericOperators[f.operator]:
+		if colType == colTypeDate {
+			f.asDate = true
+			f.threshold = float64(parseDateValueFast(options.Query))
+			f.valid = f.threshold != 0
+		} else {
+			f.threshold, f.valid = parseNumberStrict(options.Query)
+		}
+	case f.operator == "regex":
+		pattern := options.Query
+		if !options.CaseSensitive {
+			pattern = "(?i)" + pattern
+		}
+		re, err := regexp.Compile(pattern)
+		f.re, f.valid = re, err == nil
+	default:
+		if !options.CaseSensitive {
+			f.query = strings.ToLower(f.query)
+		}
+	}
+	return f
+}
+
+// match reports whether a single cell satisfies the filter.
+func (f *compiledFilter) match(cellValue string) bool {
+	if !f.valid {
+		return false
+	}
+
+	if numericOperators[f.operator] {
+		var v float64
+		if f.asDate {
+			if v = float64(parseDateValueFast(cellValue)); v == 0 {
+				return false
+			}
+		} else {
+			var ok bool
+			if v, ok = parseNumberStrict(cellValue); !ok {
+				return false
+			}
+		}
+		switch f.operator {
+		case ">":
+			return v > f.threshold
+		case "<":
+			return v < f.threshold
+		case ">=":
+			return v >= f.threshold
+		default: // "<="
+			return v <= f.threshold
+		}
+	}
+
+	if f.operator == "regex" {
+		return f.re.MatchString(cellValue)
+	}
+
+	cell := cellValue
+	if !f.caseSens {
+		cell = strings.ToLower(cell)
+	}
+	switch f.operator {
+	case "equals":
+		return cell == f.query
+	case "starts with":
+		return strings.HasPrefix(cell, f.query)
+	case "ends with":
+		return strings.HasSuffix(cell, f.query)
+	default:
+		// "contains", and the historical default for an empty operator
+		return strings.Contains(cell, f.query)
+	}
+}
+
 // filterByColumn filters rows based on column value using the provided options.
 // It returns a new buffer containing the filtered rows.
 func (b *Buffer) filterByColumn(colIndex int, options FilterOptions) *Buffer {
@@ -836,23 +948,18 @@ func (b *Buffer) filterByColumn(colIndex int, options FilterOptions) *Buffer {
 		return filtered
 	}
 
-	// Get column type for numeric comparisons
 	colType := colTypeStr
 	if colIndex < len(b.colType) {
 		colType = b.colType[colIndex]
 	}
+	filter := compileFilter(options, colType)
 
 	// Filter data rows
-	startRow := b.rowFreeze
-	for i := startRow; i < b.rowLen; i++ {
+	for i := b.rowFreeze; i < b.rowLen; i++ {
 		if colIndex >= len(b.cont[i]) {
 			continue
 		}
-
-		cellValue := b.cont[i][colIndex]
-
-		// Evaluate filter condition
-		if evaluateFilter(cellValue, options, colType) {
+		if filter.match(b.cont[i][colIndex]) {
 			filtered.cont = append(filtered.cont, b.cont[i])
 			filtered.rowLen++
 		}
@@ -861,66 +968,9 @@ func (b *Buffer) filterByColumn(colIndex int, options FilterOptions) *Buffer {
 	return filtered
 }
 
-// evaluateFilter checks if a cell value matches the filter query based on the operator.
+// evaluateFilter checks if a single cell value matches the filter options.
+// Prefer compileFilter when evaluating many cells.
 func evaluateFilter(cellValue string, options FilterOptions, colType int) bool {
-	query := options.Query
-	operator := options.Operator
-
-	// Handle numeric comparisons first
-	if colType == colTypeFloat || colType == colTypeDate {
-		isNumericOperator := false
-		switch operator {
-		case ">", "<", ">=", "<=":
-			isNumericOperator = true
-		}
-
-		if isNumericOperator {
-			cellVal := parseNumericValueFast(cellValue)
-			thresholdVal, err := strconv.ParseFloat(strings.TrimSpace(query), 64)
-			if err != nil {
-				return false // Cannot compare if query is not a number
-			}
-
-			switch operator {
-			case ">":
-				return cellVal > thresholdVal
-			case "<":
-				return cellVal < thresholdVal
-			case ">=":
-				return cellVal >= thresholdVal
-			case "<=":
-				return cellVal <= thresholdVal
-			}
-		}
-	}
-
-	// Prepare strings for comparison
-	cell := cellValue
-	q := query
-	if !options.CaseSensitive {
-		cell = strings.ToLower(cell)
-		q = strings.ToLower(q)
-	}
-
-	// Handle string-based operators
-	switch operator {
-	case "contains":
-		return strings.Contains(cell, q)
-	case "equals":
-		return cell == q
-	case "starts with":
-		return strings.HasPrefix(cell, q)
-	case "ends with":
-		return strings.HasSuffix(cell, q)
-	case "regex":
-		// When using regex, the user has full control over case sensitivity in the pattern.
-		re, err := regexp.Compile(options.Query)
-		if err != nil {
-			return false // Invalid regex
-		}
-		return re.MatchString(cellValue)
-	default:
-		// Default to contains for backward compatibility if operator is empty
-		return strings.Contains(cell, q)
-	}
+	f := compileFilter(options, colType)
+	return f.match(cellValue)
 }
