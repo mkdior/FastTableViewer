@@ -52,6 +52,7 @@ var activeFilters map[int]FilterOptions // Track active filters: column -> query
 var currentCursorColumn int             // Track current cursor column position
 var lastGPress time.Time                // Time of the last 'g' press, for the gg chord
 var pendingCount int                    // Digits typed so far for a vim-style count prefix (0 = none)
+var keys = defaultKeymap()              // Active key bindings
 
 // LoadProgress tracks loading progress. It is written by the loader goroutine
 // and read by the UI ticker, so the fields are atomic.
@@ -103,6 +104,7 @@ func initView() {
 	currentCursorColumn = 0                     // Initialize cursor column
 	lastGPress = time.Time{}                    // Initialize vim navigation state
 	pendingCount = 0
+	pendingChord = nil
 }
 
 // stop UI
@@ -112,14 +114,7 @@ func stopView() {
 
 // updateFooterWithStatus updates the footer with a status message
 func updateFooterWithStatus(status string) {
-	statusMessage = status
-	if mainPage != nil {
-		// Update the footer by rebuilding it
-		mainPage.Clear()
-		mainPage.AddText(fileNameStr, false, tview.AlignLeft, theme.Accent).
-			AddText(status, false, tview.AlignCenter, theme.Text).
-			AddText(cursorPosStr, false, tview.AlignRight, theme.Dim)
-	}
+	drawFooterText(fileNameStr, status, cursorPosStr)
 }
 
 //help page content

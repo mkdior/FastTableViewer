@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/fatih/color"
+	"github.com/rivo/uniseg"
 )
 
 // fatalError restores the terminal, prints err in red and exits with status 1.
@@ -58,107 +59,75 @@ func I2S(i int) string {
 	return strconv.Itoa(i)
 }
 
+// getHelpContent renders the help dialog from the action catalog and the
+// active keymap, so remapped keys are shown exactly as bound.
 func getHelpContent() string {
-	helpContent := `[` + theme.tag(theme.Dim) + `]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[-:-:-]
+	key := func(k string) string { return theme.tag(theme.Accent) + k + "[-]" }
+	head := func(h string) string { return "[::b]" + theme.tag(theme.Text) + h + "[-:-:-]" }
+	rule := theme.tag(theme.Dim) + strings.Repeat("━", 72) + "[-:-:-]"
+	entry := func(k, text string) string {
+		pad := 22 - uniseg.StringWidth(k)
+		if pad < 2 {
+			pad = 2
+		}
+		return "  " + key(k) + strings.Repeat(" ", pad) + text + "\n"
+	}
 
-[::b][` + theme.tag(theme.Text) + `]ftv - Fast Table Viewer[-:-:-]
+	var sb strings.Builder
+	sb.WriteString(rule + "\n\n" + head("ftv - Fast Table Viewer") + "\n\n" + rule + "\n\n")
 
-[` + theme.tag(theme.Dim) + `]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[-:-:-]
+	sb.WriteString(head("Help Navigation") + "\n")
+	sb.WriteString(entry("j/k", "Scroll help text"))
+	sb.WriteString(entry("gg/G", "Jump to top/bottom"))
+	sb.WriteString(entry("Ctrl-d/u", "Page down/up"))
+	sb.WriteString(entry("? or q or Esc", "Close help dialog"))
+	sb.WriteString("\n")
 
-[::b][` + theme.tag(theme.Text) + `]Help Navigation[-:-:-]
-  [` + theme.tag(theme.Accent) + `]j/k[-]                 Scroll help text
-  [` + theme.tag(theme.Accent) + `]gg/G[-]                Jump to top/bottom
-  [` + theme.tag(theme.Accent) + `]Ctrl-d/u[-]            Page down/up
-  [` + theme.tag(theme.Accent) + `]? or q or Esc[-]       Close help dialog
+	var section string
+	for _, a := range actionCatalog {
+		if a.section != section {
+			if section != "" {
+				sb.WriteString("\n")
+			}
+			section = a.section
+			sb.WriteString(head(section) + "\n")
+		}
+		bound := keys.keysFor(a.act)
+		if bound == "" {
+			bound = "(unbound)"
+		}
+		sb.WriteString(entry(bound, a.help))
+	}
+	sb.WriteString("\n")
 
-[::b][` + theme.tag(theme.Text) + `]Quit[-:-:-]
-  [` + theme.tag(theme.Accent) + `]q[-]                   Quit application
-  [` + theme.tag(theme.Accent) + `]Esc[-]                 Close dialog or clear search
+	sb.WriteString(head("Count prefixes") + "\n")
+	sb.WriteString(entry("N + motion", "Repeat a motion N times: 5j, 3l, 2w, 4n"))
+	sb.WriteString(entry("NG / Ngg", "Jump to row N"))
+	sb.WriteString(entry("N Ctrl-d/u", "Move N rows"))
+	sb.WriteString("\n")
 
-[::b][` + theme.tag(theme.Text) + `]Movement[-:-:-]
-  [` + theme.tag(theme.Accent) + `]h[-]                   Move left (wraps to the last column)
-  [` + theme.tag(theme.Accent) + `]l[-]                   Move right (wraps to the first column)
-  [` + theme.tag(theme.Accent) + `]j[-]                   Move down
-  [` + theme.tag(theme.Accent) + `]k[-]                   Move up
+	sb.WriteString(head("Mouse") + "\n")
+	sb.WriteString(entry("Left click", "Select cell"))
+	sb.WriteString(entry("Scroll wheel", "Move up/down through rows"))
+	sb.WriteString(entry("Click buttons", "Interact with dialogs and forms"))
+	sb.WriteString("\n")
 
-  [` + theme.tag(theme.Accent) + `]w[-]                   Move to next column (word forward)
-  [` + theme.tag(theme.Accent) + `]b[-]                   Move to previous column (word backward)
+	sb.WriteString(head("Search and filter") + "\n")
+	sb.WriteString("  Search is case-insensitive unless Case Sensitive is checked; Tab moves\n")
+	sb.WriteString("  between the field, the checkboxes and the buttons. Regex examples:\n")
+	sb.WriteString(entry("^start", "Match at beginning of cell"))
+	sb.WriteString(entry("end$", "Match at end of cell"))
+	sb.WriteString(entry("\\d+", "Match digits"))
+	sb.WriteString(entry("word1|word2", "Match either word"))
+	sb.WriteString("  Filters take an operator (contains, equals, starts/ends with, regex,\n")
+	sb.WriteString("  >, <, >=, <=) and combine across columns with AND.\n\n")
 
-  [` + theme.tag(theme.Accent) + `]gg[-]                  Go to first row (press g twice)
-  [` + theme.tag(theme.Accent) + `]G[-]                   Go to last row
-
-  [` + theme.tag(theme.Accent) + `]0[-]                   Go to first column
-  [` + theme.tag(theme.Accent) + `]$[-]                   Go to last column
-
-  [` + theme.tag(theme.Accent) + `]Ctrl-d[-]              Page down (half page)
-  [` + theme.tag(theme.Accent) + `]Ctrl-u[-]              Page up (half page)
-
-  [` + theme.tag(theme.Accent) + `]N + motion[-]          Repeat a motion N times: 5j, 3l, 2w, 4n
-  [` + theme.tag(theme.Accent) + `]NG / Ngg[-]            Jump to row N
-  [` + theme.tag(theme.Accent) + `]N Ctrl-d/u[-]          Move N rows
-
-[::b][` + theme.tag(theme.Text) + `]Mouse Support[-:-:-]
-  [` + theme.tag(theme.Accent) + `]Left Click[-]          Select cell
-  [` + theme.tag(theme.Accent) + `]Scroll Wheel[-]        Scroll up/down through rows
-  [` + theme.tag(theme.Accent) + `]Click Buttons[-]       Interact with dialogs and forms
-
-[::b][` + theme.tag(theme.Text) + `]Search[-:-:-]
-  [` + theme.tag(theme.Accent) + `]/[-]                   Search for text
-                    • Case-insensitive by default
-                    • Press [` + theme.tag(theme.Accent) + `]Tab[-] to navigate to checkbox
-                    • Press [` + theme.tag(theme.Accent) + `]Space[-] to toggle [` + theme.tag(theme.Accent) + `]Use Regex[-] option
-  [` + theme.tag(theme.Accent) + `]n[-]                   Next search result
-  [` + theme.tag(theme.Accent) + `]N[-]                   Previous search result
-  [` + theme.tag(theme.Accent) + `]Esc[-]                 Clear search highlighting
-
-[::b][` + theme.tag(theme.Text) + `]Regex Search Examples[-:-:-]
-  [` + theme.tag(theme.Accent) + `]^start[-]              Match at beginning of cell
-  [` + theme.tag(theme.Accent) + `]end$[-]                Match at end of cell
-  [` + theme.tag(theme.Accent) + `]\d+[-]                 Match digits (numbers)
-  [` + theme.tag(theme.Accent) + `]@.*\.com[-]            Match email pattern
-  [` + theme.tag(theme.Accent) + `]word1|word2[-]         Match either word (OR)
-  [` + theme.tag(theme.Accent) + `][A-Z]+[-]              Match uppercase letters
-
-[::b][` + theme.tag(theme.Text) + `]Filter[-:-:-]
-  [` + theme.tag(theme.Accent) + `]f[-]                   Filter rows by current column value
-                    • Operators: contains, equals, starts/ends with, regex, >, <, >=, <=
-                    • Apply filters to multiple columns (combined with AND)
-                    • Edit filter: press f on filtered column
-  [` + theme.tag(theme.Accent) + `]r[-]                   Remove filter from current column
-
-[::b][` + theme.tag(theme.Text) + `]Data Type[-:-:-]
-  [` + theme.tag(theme.Accent) + `]t[-]                   Toggle column data type
-                    (String → Number → Date → String)
-
-[::b][` + theme.tag(theme.Text) + `]Sort[-:-:-]
-  [` + theme.tag(theme.Accent) + `]s[-]                   Sort data by column (ascending )
-  [` + theme.tag(theme.Accent) + `]S[-]                   Sort data by column (descending )
-
-[::b][` + theme.tag(theme.Text) + `]Text Wrapping[-:-:-]
-  [` + theme.tag(theme.Accent) + `]W[-]                   Toggle width limit for current column (50 chars)
-                    Long columns (>50 chars) are limited automatically
-                    A cut cell shows its full value in a floating box
-                    while selected (values up to 1000 characters)
-
-[::b][` + theme.tag(theme.Text) + `]Stats[-:-:-]
-  [` + theme.tag(theme.Accent) + `]i[-]                   Show stats info for current column
-
-[::b][` + theme.tag(theme.Text) + `]Help[-:-:-]
-  [` + theme.tag(theme.Accent) + `]?[-]                   Show this help dialog
-
-[` + theme.tag(theme.Dim) + `]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[-:-:-]
-
-[::b][` + theme.tag(theme.Text) + `]Pro Tips:[-:-:-]
-  • Press [` + theme.tag(theme.Accent) + `]gg[-] to jump to the top of any table
-  • Use [` + theme.tag(theme.Accent) + `]/[-] for quick searching across all cells
-  • Enable [` + theme.tag(theme.Accent) + `]regex[-] mode for powerful pattern matching
-  • Press [` + theme.tag(theme.Accent) + `]i[-] to see detailed statistics for any column
-  • Use [` + theme.tag(theme.Accent) + `]f[-] on multiple columns to combine filters
-  • Headers are frozen by default for easy navigation
-
-[` + theme.tag(theme.Dim) + `]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[-:-:-]
-`
-	return helpContent
+	sb.WriteString(head("Tips") + "\n")
+	sb.WriteString("  Long cells are cut at 50 characters; a cut cell shows its full value\n")
+	sb.WriteString("  in a floating box while selected. Keys can be changed in the config\n")
+	sb.WriteString("  file; see ftv --dump-config for the defaults.\n\n")
+	sb.WriteString(rule + "\n")
+	return sb.String()
 }
 
 // wrapText wraps text to fit within maxWidth characters
