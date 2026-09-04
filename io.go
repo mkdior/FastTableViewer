@@ -252,8 +252,11 @@ func loadToBuffer(src loadSource, b *Buffer, updateChan chan<- bool, showProgres
 
 	if updateChan != nil {
 		// Async mode: do not hold up the "loaded" signal for post-processing.
-		go b.detectAllColumnTypes()
-		go b.enableStringInterning()
+		// Interning reads column types, so the two steps must run in order.
+		go func() {
+			b.detectAllColumnTypes()
+			b.enableStringInterning()
+		}()
 	} else {
 		b.detectAllColumnTypes()
 		b.enableStringInterning()
