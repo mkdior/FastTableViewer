@@ -137,9 +137,15 @@ func loadToBuffer(src loadSource, b *Buffer, updateChan chan<- bool, showProgres
 	skipRemaining := args.SkipNum //lines still to skip before reading data
 	totalAddedLN := 0             //the number of lines has been added into buffer
 
+	physicalLine := 0 // 1-based number of the last line read from the input
+	scanDone := false // set once Scan returns false; calling Scan again after ErrTooLong yields a truncated bogus token
 	// nextLine returns the next line that survives the blank/skip/prefix filters.
 	nextLine := func() (string, bool) {
+		if scanDone {
+			return "", false
+		}
 		for src.scanner.Scan() {
+			physicalLine++
 			line := src.scanner.Text()
 			if line == "" {
 				continue
@@ -153,6 +159,7 @@ func loadToBuffer(src loadSource, b *Buffer, updateChan chan<- bool, showProgres
 			}
 			return line, true
 		}
+		scanDone = true
 		return "", false
 	}
 
@@ -243,7 +250,7 @@ func loadToBuffer(src loadSource, b *Buffer, updateChan chan<- bool, showProgres
 
 	if err := src.scanner.Err(); err != nil {
 		if errors.Is(err, bufio.ErrTooLong) {
-			return fmt.Errorf("line %d exceeds the %d byte line limit", totalAddedLN+args.SkipNum+1, maxScanTokenSize)
+			return fmt.Errorf("line %d exceeds the %d byte line limit", physicalLine+1, maxScanTokenSize)
 		}
 		return err
 	}

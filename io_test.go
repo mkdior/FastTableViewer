@@ -598,8 +598,11 @@ func TestLoadPipeToBuffer_LineTooLongIsReported(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected an error for a line over %d bytes, got nil (rows silently truncated to %d)", maxScanTokenSize, b.rowLen)
 	}
-	if !strings.Contains(err.Error(), "line limit") {
+	if !strings.Contains(err.Error(), "line 3 exceeds") {
 		t.Errorf("unexpected error: %v", err)
+	}
+	if b.rowLen != 2 {
+		t.Errorf("rowLen = %d, want 2; the truncated remainder must not be appended as a row", b.rowLen)
 	}
 }
 
