@@ -226,6 +226,9 @@ Ctrl-u: half a page up
 N followed by a motion: repeat it N times, as in vim (`5j`, `3l`, `2w`,
     `4n`); `NG` or `Ngg` jumps to row N and `N Ctrl-d` or `N Ctrl-u` moves N
     rows. `0` on its own still goes to the first column.
+Vertical motions stop at the first data row; the frozen header is never
+    selected, and an overshooting count such as `200k` in a 150-row file lands
+    on the first row.
 
 ### Operations
 

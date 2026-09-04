@@ -69,11 +69,11 @@ func startAsyncUpdateHandler(updateChan <-chan bool, doneChan <-chan error) {
 				app.QueueUpdateDraw(func() {
 					drawBuffer(b, bufferTable)
 
-					// Keep cursor on first row if user hasn't moved it
+					// Keep cursor on the first data row if user hasn't moved it
 					if !userMovedCursor {
 						row, col := bufferTable.GetSelection()
-						if row != 0 {
-							bufferTable.Select(0, col)
+						if first := firstDataRow(b); row != first {
+							bufferTable.Select(first, col)
 						}
 					}
 

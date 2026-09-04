@@ -146,7 +146,24 @@ func (c *bufferContent) GetCell(r, col int) *tview.TableCell {
 	if maxWidth > 0 {
 		cell.SetMaxWidth(maxWidth)
 	}
+	if isHeaderRow {
+		// The frozen header is always on screen, so selecting it would not move
+		// the view; keep the cursor on data rows (tview skips these cells too).
+		cell.SetSelectable(false)
+	}
 	return cell
+}
+
+// firstDataRow returns the first selectable row of b: the row after the
+// frozen header, or 0 when no header is frozen.
+func firstDataRow(b *Buffer) int {
+	return clampInt(b.rowFreeze, 0, b.rowLen-1)
+}
+
+// clampRow keeps a target row within the selectable data rows of b, so any
+// motion or count that overshoots lands on the first or last data row.
+func clampRow(row int, b *Buffer) int {
+	return clampInt(row, firstDataRow(b), b.rowLen-1)
 }
 
 // drawBuffer points the table at b. Cells are produced lazily by bufferContent,
@@ -259,7 +276,7 @@ func drawUI(b *Buffer) error {
 	bufferTable.SetSeparator(tview.Borders.Vertical)             // Add subtle vertical separators
 	bufferTable.SetBordersColor(tcell.NewRGBColor(60, 100, 140)) // Subtle blue borders
 	bufferTable.SetFixed(b.rowFreeze, b.colFreeze)
-	bufferTable.Select(0, 0)
+	bufferTable.Select(firstDataRow(b), 0)
 	bufferTable.SetSelectedStyle(tcell.Style{}.
 		Foreground(tcell.ColorWhite).
 		Background(tcell.NewRGBColor(80, 120, 160)). // Darker, muted blue
@@ -271,7 +288,7 @@ func drawUI(b *Buffer) error {
 	drawBuffer(b, bufferTable)
 
 	//main page init with modern styling
-	cursorPosStr = buildCursorPosStr(0, 0) //footer right
+	cursorPosStr = buildCursorPosStr(firstDataRow(b), 0) //footer right
 	if statusMessage == "" {
 		statusMessage = "All Done"
 	}
@@ -318,8 +335,8 @@ func drawUI(b *Buffer) error {
 	var footerUpdateThrottle = 50 * time.Millisecond
 
 	bufferTable.SetSelectionChangedFunc(func(row int, column int) {
-		// Mark that user has moved cursor if they moved from initial position (0,0)
-		if !userMovedCursor && (row != 0 || column != 0) {
+		// Mark that user has moved cursor if they moved from the initial position
+		if !userMovedCursor && (row != firstDataRow(b) || column != 0) {
 			userMovedCursor = true
 		}
 
@@ -361,7 +378,7 @@ func drawUI(b *Buffer) error {
 			// even when the selection-changed throttle skips this update.
 			defer drawFooterText(fileNameStr, statusMessage, cursorPosStr)
 		}
-		lastRow, lastCol := b.rowLen-1, b.colLen-1
+		firstRow, lastRow, lastCol := firstDataRow(b), b.rowLen-1, b.colLen-1
 
 		// Vim-like navigation
 		// h - move left
@@ -381,14 +398,14 @@ func drawUI(b *Buffer) error {
 		// j - move down
 		if event.Key() == tcell.KeyRune && event.Rune() == 'j' {
 			row, col := bufferTable.GetSelection()
-			bufferTable.Select(clampInt(row+count, 0, lastRow), col)
+			bufferTable.Select(clampInt(row+count, firstRow, lastRow), col)
 			return nil
 		}
 
 		// k - move up
 		if event.Key() == tcell.KeyRune && event.Rune() == 'k' {
 			row, col := bufferTable.GetSelection()
-			bufferTable.Select(clampInt(row-count, 0, lastRow), col)
+			bufferTable.Select(clampInt(row-count, firstRow, lastRow), col)
 			return nil
 		}
 
@@ -399,7 +416,7 @@ func drawUI(b *Buffer) error {
 				return nil
 			}
 			_, col := bufferTable.GetSelection()
-			bufferTable.Select(clampInt(rawCount, 0, lastRow), col)
+			bufferTable.Select(clampInt(rawCount, firstRow, lastRow), col)
 			if rawCount == 0 {
 				bufferTable.ScrollToBeginning()
 			}
@@ -410,7 +427,7 @@ func drawUI(b *Buffer) error {
 		if event.Key() == tcell.KeyRune && event.Rune() == 'G' {
 			_, col := bufferTable.GetSelection()
 			if rawCount > 0 {
-				bufferTable.Select(clampInt(rawCount, 0, lastRow), col)
+				bufferTable.Select(clampInt(rawCount, firstRow, lastRow), col)
 				return nil
 			}
 			bufferTable.Select(lastRow, col)
@@ -425,7 +442,7 @@ func drawUI(b *Buffer) error {
 			if rawCount > 0 {
 				step = rawCount
 			}
-			bufferTable.Select(clampInt(row+step, 0, lastRow), col)
+			bufferTable.Select(clampInt(row+step, firstRow, lastRow), col)
 			return nil
 		}
 
@@ -436,7 +453,7 @@ func drawUI(b *Buffer) error {
 			if rawCount > 0 {
 				step = rawCount
 			}
-			bufferTable.Select(clampInt(row-step, 0, lastRow), col)
+			bufferTable.Select(clampInt(row-step, firstRow, lastRow), col)
 			return nil
 		}
 
@@ -693,7 +710,7 @@ func drawUI(b *Buffer) error {
 						isFiltered = true
 
 						drawBuffer(b, bufferTable)
-						bufferTable.Select(0, column) // Stay at same column, go to first row
+						bufferTable.Select(firstDataRow(b), column) // Stay at same column, go to first data row
 						matchCount := b.rowLen - b.rowFreeze
 						drawFooterText(fileNameStr,
 							fmt.Sprintf("Filtered: %d rows match (%d filters active, r to reset)", matchCount, len(activeFilters)),
@@ -710,7 +727,7 @@ func drawUI(b *Buffer) error {
 							b = originalBuffer
 							isFiltered = false
 							drawBuffer(b, bufferTable)
-							bufferTable.Select(0, column) // Stay at same column
+							bufferTable.Select(firstDataRow(b), column) // Stay at same column
 							drawFooterText(fileNameStr, "All filters cleared - showing all rows", cursorPosStr)
 						} else {
 							// Apply remaining filters
@@ -720,7 +737,7 @@ func drawUI(b *Buffer) error {
 							}
 							b = filteredBuffer
 							drawBuffer(b, bufferTable)
-							bufferTable.Select(0, column) // Stay at same column
+							bufferTable.Select(firstDataRow(b), column) // Stay at same column
 							matchCount := b.rowLen - b.rowFreeze
 							drawFooterText(fileNameStr,
 								fmt.Sprintf("Filter removed: %d rows match (%d filters active)", matchCount, len(activeFilters)),
@@ -989,7 +1006,7 @@ func drawUI(b *Buffer) error {
 		switch action {
 		case tview.MouseScrollUp:
 			row, col := bufferTable.GetSelection()
-			if row > 0 {
+			if row > firstDataRow(b) {
 				bufferTable.Select(row-1, col)
 			}
 			return action, event

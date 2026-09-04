@@ -47,3 +47,44 @@ func TestClampInt(t *testing.T) {
 		}
 	}
 }
+
+func TestClampRow_NeverSelectsHeader(t *testing.T) {
+	// 150 data rows under a frozen header, as in the reported bug.
+	rows := [][]string{{"id", "v"}}
+	for i := 1; i <= 150; i++ {
+		rows = append(rows, []string{I2S(i), "x"})
+	}
+	buf, err := createNewBufferWithData(rows, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	buf.rowFreeze = 1
+
+	last := buf.rowLen - 1
+	if got := firstDataRow(buf); got != 1 {
+		t.Fatalf("firstDataRow = %d, want 1", got)
+	}
+	tests := []struct {
+		name              string
+		from, delta, want int
+	}{
+		{"200k from the bottom lands on the first data row", last, -200, 1},
+		{"200000k from the bottom lands on the first data row", last, -200000, 1},
+		{"1k from the first data row stays there", 1, -1, 1},
+		{"200j from the bottom stays on the last row", last, 200, last},
+		{"5j from the top", 1, 5, 6},
+	}
+	for _, tt := range tests {
+		if got := clampRow(tt.from+tt.delta, buf); got != tt.want {
+			t.Errorf("%s: clampRow(%d) = %d, want %d", tt.name, tt.from+tt.delta, got, tt.want)
+		}
+	}
+
+	noHeader := createNewBuffer()
+	_ = noHeader.contAppendSli([]string{"a"}, false)
+	_ = noHeader.contAppendSli([]string{"b"}, false)
+	noHeader.rowFreeze = 0
+	if got := clampRow(-5, noHeader); got != 0 {
+		t.Errorf("without a header row 0 is selectable, got %d", got)
+	}
+}
