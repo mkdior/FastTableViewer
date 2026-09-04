@@ -121,7 +121,7 @@ go install github.com/mkdior/FastTableViewer/cmd/ftv@latest
 
 ### Build from source
 
-Requires Go 1.24 or later:
+Requires Go 1.25 or later:
 
 ```bash
 git clone https://github.com/mkdior/FastTableViewer.git
