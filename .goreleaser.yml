@@ -57,10 +57,11 @@ snapshot:
   version_template: "{{ incpatch .Version }}-next"
 
 # Release notes come from scripts/release-notes.sh (git log --oneline since the
-# previous tag, in a code block) and are passed with --release-notes; the
-# built-in changelog would prefix every line with "* " and use full hashes.
+# previous tag, in a code block) and are passed with --release-notes, which
+# replaces the built-in changelog (bulleted lines with full hashes). Do not set
+# changelog.disable: it skips the pipe that reads the --release-notes file.
 changelog:
-  disable: true
+  use: git
 
 release:
   header: |
