@@ -48,7 +48,8 @@ controls.
 - **Search**: plain text or regex, with highlighting and next/previous
   navigation
 - **Filtering**: per-column filters with text, regex, numeric and date
-  operators, combined across columns
+  operators, combined across columns, plus unique filters that drop
+  duplicate values or rows
 - **Sorting**: by any column, with string, number and date ordering
 - **Column width limits**: cap wide columns so the rest of the table stays
   readable
@@ -373,9 +374,16 @@ Comparison (`>`, `<`, `>=`, `<=`): numeric comparison on any column; cells
     that do not parse as numbers never match. On a column typed as Date the
     comparison is chronological and the value must be a date in one of the
     formats listed above.
+unique: keeps the first row for each distinct value in the column and drops
+    the rest, so 200 rows with 12 distinct values in the column become 12
+    rows; the value field is ignored
+unique rows: keeps the first of each set of rows that are identical in every
+    column
 
-Text operators are case-insensitive unless `Case Sensitive` is checked. An
-invalid regex or a non-numeric threshold matches nothing.
+Text operators and both unique operators are case-insensitive unless
+`Case Sensitive` is checked. An invalid regex or a non-numeric threshold
+matches nothing. When filters are combined, the value filters run first and
+the unique filters last, so duplicates are removed from the rows that match.
 
 ### Yank
 

@@ -251,3 +251,23 @@ func TestRewrittenHandlersThroughKeys(t *testing.T) {
 		t.Errorf("t twice more should return to String, got %s", type2name(got))
 	}
 }
+
+func TestApplyActiveFiltersRunsValueFiltersBeforeUnique(t *testing.T) {
+	data := [][]string{{"k", "v"}, {"a", "v1"}, {"bx", "v1"}, {"cx", "v2"}, {"dx", "v2"}}
+	base, _ := createNewBufferWithData(data, true)
+	base.rowFreeze = 1
+	old := activeFilters
+	defer func() { activeFilters = old }()
+	activeFilters = map[int]FilterOptions{
+		1: {Operator: opUnique},
+		0: {Query: "x", Operator: "contains"},
+	}
+	got := applyActiveFilters(base)
+	// unique must see only the rows containing "x": bx/v1 and cx/v2 survive.
+	if got.rowLen != 3 || got.cont[1][0] != "bx" || got.cont[2][0] != "cx" {
+		t.Errorf("expected bx and cx, got %v", got.cont[1:])
+	}
+	if describeFilter(FilterOptions{Operator: opUnique}) != "unique" || describeFilter(FilterOptions{Operator: "equals", Query: "q"}) != `equals "q"` {
+		t.Error("describeFilter output unexpected")
+	}
+}

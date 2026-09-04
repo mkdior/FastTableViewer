@@ -227,3 +227,39 @@ func TestEvaluateFilter_Operators(t *testing.T) {
 		})
 	}
 }
+
+func TestFilterUnique(t *testing.T) {
+	data := [][]string{
+		{"Name", "Status"},
+		{"Alice", "Active"},
+		{"Bob", "Inactive"},
+		{"Charlie", "active"},
+		{"Dana", "Active"},
+		{"Eve", "Pending"},
+	}
+	buf, _ := createNewBufferWithData(data, true)
+	buf.rowFreeze = 1
+
+	got := buf.filterByColumn(1, FilterOptions{Operator: opUnique})
+	if got.rowLen != 4 || got.cont[1][0] != "Alice" || got.cont[2][0] != "Bob" || got.cont[3][0] != "Eve" {
+		t.Errorf("unique (case-insensitive) should keep Alice, Bob, Eve in order, got %v", got.cont[1:])
+	}
+	got = buf.filterByColumn(1, FilterOptions{Operator: opUnique, CaseSensitive: true})
+	if got.rowLen != 5 || got.cont[3][0] != "Charlie" {
+		t.Errorf("case-sensitive unique must keep 'active' separately, got %v", got.cont[1:])
+	}
+	if got.cont[0][0] != "Name" {
+		t.Error("the header must be kept")
+	}
+
+	rows := [][]string{{"a", "b"}, {"1", "2"}, {"1", "2"}, {"1", "3"}, {"1", "2"}}
+	buf, _ = createNewBufferWithData(rows, true)
+	buf.rowFreeze = 1
+	got = buf.filterByColumn(0, FilterOptions{Operator: opUniqueRows})
+	if got.rowLen != 3 || got.cont[1][1] != "2" || got.cont[2][1] != "3" {
+		t.Errorf("unique rows should keep [1 2] and [1 3] once each, got %v", got.cont[1:])
+	}
+	if !isUniqueOperator(opUnique) || !isUniqueOperator(opUniqueRows) || isUniqueOperator("contains") {
+		t.Error("isUniqueOperator classification wrong")
+	}
+}

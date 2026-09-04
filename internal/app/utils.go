@@ -120,7 +120,9 @@ func getHelpContent() string {
 	sb.WriteString(entry("\\d+", "Match digits"))
 	sb.WriteString(entry("word1|word2", "Match either word"))
 	sb.WriteString("  Filters take an operator (contains, equals, starts/ends with, regex,\n")
-	sb.WriteString("  >, <, >=, <=) and combine across columns with AND.\n\n")
+	sb.WriteString("  >, <, >=, <=) and combine across columns with AND. unique keeps the\n")
+	sb.WriteString("  first row per distinct value in the column; unique rows drops rows\n")
+	sb.WriteString("  that repeat an earlier row exactly.\n\n")
 
 	sb.WriteString(head("Tips") + "\n")
 	sb.WriteString("  Long cells are cut at 50 characters; a cut cell shows its full value\n")

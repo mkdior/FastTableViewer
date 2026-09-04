@@ -901,6 +901,31 @@ type FilterOptions struct {
 	CaseSensitive bool
 }
 
+// Filter operators that remove duplicate rows instead of matching a value.
+const (
+	opUnique     = "unique"      // keep the first row for each distinct value in the column
+	opUniqueRows = "unique rows" // keep the first of each set of identical rows
+)
+
+// isUniqueOperator reports whether the operator dedupes rows and needs no value.
+func isUniqueOperator(op string) bool {
+	return op == opUnique || op == opUniqueRows
+}
+
+// uniqueKey is the identity of row for a unique filter on colIndex.
+func uniqueKey(row []string, colIndex int, options FilterOptions) string {
+	var key string
+	if options.Operator == opUniqueRows {
+		key = strings.Join(row, "\x1f")
+	} else if colIndex < len(row) {
+		key = row[colIndex]
+	}
+	if !options.CaseSensitive {
+		key = strings.ToLower(key)
+	}
+	return key
+}
+
 // numericOperators are the filter operators that compare values as numbers (or dates on date columns).
 var numericOperators = map[string]bool{">": true, "<": true, ">=": true, "<=": true}
 
@@ -1045,6 +1070,20 @@ func (b *Buffer) filterByColumn(colIndex int, options FilterOptions) *Buffer {
 
 	// Early exit if column index is invalid - but still return buffer with header
 	if colIndex >= b.colLen {
+		return filtered
+	}
+
+	if isUniqueOperator(options.Operator) {
+		seen := make(map[string]struct{}, b.rowLen-b.rowFreeze)
+		for i := b.rowFreeze; i < b.rowLen; i++ {
+			key := uniqueKey(b.cont[i], colIndex, options)
+			if _, dup := seen[key]; dup {
+				continue
+			}
+			seen[key] = struct{}{}
+			filtered.cont = append(filtered.cont, b.cont[i])
+			filtered.rowLen++
+		}
 		return filtered
 	}
 

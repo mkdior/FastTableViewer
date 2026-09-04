@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -32,11 +33,41 @@ func buildFilterInfoStr(currentColumn int) string {
 			columnName = b.cont[0][currentColumn]
 		}
 
-		return fmt.Sprintf("Filter Active: [%s] %s \"%s\"  |  %d filters total  |  Press 'r' to remove this filter", columnName, opts.Operator, opts.Query, len(activeFilters))
+		return fmt.Sprintf("Filter Active: [%s] %s  |  %d filters total  |  Press 'r' to remove this filter", columnName, describeFilter(opts), len(activeFilters))
 	}
 
 	// Show summary if cursor is not on a filtered column
 	return fmt.Sprintf("%d filters active  |  Navigate to filtered column and press 'r' to remove", len(activeFilters))
+}
+
+// describeFilter renders a filter for the footer strip.
+func describeFilter(opts FilterOptions) string {
+	if isUniqueOperator(opts.Operator) {
+		return opts.Operator
+	}
+	return fmt.Sprintf("%s %q", opts.Operator, opts.Query)
+}
+
+// applyActiveFilters runs every active filter over base: the value filters
+// first, in column order, then the unique filters, so duplicates are removed
+// from the rows that match rather than before matching.
+func applyActiveFilters(base *Buffer) *Buffer {
+	cols := make([]int, 0, len(activeFilters))
+	for c := range activeFilters {
+		cols = append(cols, c)
+	}
+	sort.Slice(cols, func(i, j int) bool {
+		ui, uj := isUniqueOperator(activeFilters[cols[i]].Operator), isUniqueOperator(activeFilters[cols[j]].Operator)
+		if ui != uj {
+			return !ui
+		}
+		return cols[i] < cols[j]
+	})
+	out := base
+	for _, c := range cols {
+		out = out.filterByColumn(c, activeFilters[c])
+	}
+	return out
 }
 
 // searchMatchSet mirrors searchResults as a set so cell styling is O(1) per cell.
@@ -579,7 +610,7 @@ func openFilterDialog() {
 	filterForm := tview.NewForm()
 
 	// Operator selection
-	operators := []string{"contains", "equals", "starts with", "ends with", "regex", ">", "<", ">=", "<="}
+	operators := []string{"contains", "equals", "starts with", "ends with", "regex", ">", "<", ">=", "<=", opUnique, opUniqueRows}
 	selectedOperatorIndex := 0
 
 	// Value input
@@ -609,7 +640,8 @@ func openFilterDialog() {
 		query = filterForm.GetFormItem(1).(*tview.InputField).GetText()
 		operator := operators[selectedOperatorIndex]
 
-		if query != "" {
+		// Unique filters need no value; for the others an empty value removes the filter.
+		if query != "" || isUniqueOperator(operator) {
 			drawFooterText(fileNameStr, "Filtering...", cursorPosStr)
 			app.ForceDraw()
 
@@ -625,11 +657,7 @@ func openFilterDialog() {
 				originalBuffer = b // Save original buffer first time
 			}
 
-			// Start with original buffer and apply all filters sequentially
-			filteredBuffer := originalBuffer
-			for col, opts := range activeFilters {
-				filteredBuffer = filteredBuffer.filterByColumn(col, opts)
-			}
+			filteredBuffer := applyActiveFilters(originalBuffer)
 
 			// Update display with filtered data
 			if filteredBuffer.rowLen <= filteredBuffer.rowFreeze {
@@ -663,11 +691,7 @@ func openFilterDialog() {
 					drawFooterText(fileNameStr, "All filters cleared - showing all rows", cursorPosStr)
 				} else {
 					// Apply remaining filters
-					filteredBuffer := originalBuffer
-					for col, opts := range activeFilters {
-						filteredBuffer = filteredBuffer.filterByColumn(col, opts)
-					}
-					b = filteredBuffer
+					b = applyActiveFilters(originalBuffer)
 					drawBuffer(b, bufferTable)
 					bufferTable.Select(firstDataRow(b), column) // Stay at same column
 					matchCount := b.rowLen - b.rowFreeze
@@ -761,11 +785,7 @@ func removeCurrentFilter() {
 				drawFooterText(fileNameStr, "All filters cleared - showing all rows", cursorPosStr)
 			} else {
 				// Apply remaining filters
-				filteredBuffer := originalBuffer
-				for col, opts := range activeFilters {
-					filteredBuffer = filteredBuffer.filterByColumn(col, opts)
-				}
-				b = filteredBuffer
+				b = applyActiveFilters(originalBuffer)
 				drawBuffer(b, bufferTable)
 				bufferTable.Select(row, column)
 				matchCount := b.rowLen - b.rowFreeze
