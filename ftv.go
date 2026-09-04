@@ -11,7 +11,7 @@ import (
 )
 
 // version is the release version; overridden at build time with -ldflags "-X main.version=..."
-var version = "0.8.1"
+var version = "0.9.0"
 
 // setupFreezeMode configures row and column freeze settings based on header mode
 func setupFreezeMode(b *Buffer) {
