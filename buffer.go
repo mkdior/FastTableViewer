@@ -147,9 +147,12 @@ func (b *Buffer) contAppendSli(s []string, strict bool) error {
 	b.cont = append(b.cont, s)
 	b.memoryUsage += rowSize
 
-	// Adjust column count if needed
-	if b.colLen != len(s) {
+	// Keep every row at least colLen wide: a longer row widens the table and
+	// pads all earlier rows, a shorter row is padded on its own.
+	if len(s) > b.colLen {
 		b.resizeColUnsafe(len(s))
+	} else if len(s) < b.colLen {
+		b.padRowUnsafe(len(b.cont) - 1)
 	}
 	b.rowLen++
 
@@ -224,16 +227,14 @@ func formatBytes(bytes int64) string {
 	return strconv.FormatFloat(float64(bytes)/float64(div), 'f', 2, 64) + " " + units[exp]
 }
 
-// resizeColUnsafe adjusts the number of columns (must be called with lock held)
-// Fills missing columns with "NaN"
+// resizeColUnsafe grows the column count to n and pads every shorter row with
+// "NaN" (must be called with lock held). The column count never shrinks.
 func (b *Buffer) resizeColUnsafe(n int) {
 	if n <= 0 {
 		return
 	}
 
-	lackLen := b.colLen - n
-	if lackLen < 0 {
-		lackLen = n - b.colLen
+	if n > b.colLen {
 		oldColLen := b.colLen
 		b.colLen = n
 
@@ -250,11 +251,15 @@ func (b *Buffer) resizeColUnsafe(n int) {
 		}
 	}
 
-	// Fill missing columns with NaN
 	for ii := range b.cont {
-		for m := 0; m < lackLen; m++ {
-			b.cont[ii] = append(b.cont[ii], "NaN")
-		}
+		b.padRowUnsafe(ii)
+	}
+}
+
+// padRowUnsafe appends "NaN" to row i until it is colLen wide (lock must be held)
+func (b *Buffer) padRowUnsafe(i int) {
+	for len(b.cont[i]) < b.colLen {
+		b.cont[i] = append(b.cont[i], "NaN")
 	}
 }
 

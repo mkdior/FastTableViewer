@@ -399,3 +399,30 @@ func TestBuffer_ResizeColMultipleTimes(t *testing.T) {
 		t.Errorf("Expected colLen >= 3, got %d", b.colLen)
 	}
 }
+
+func TestBuffer_RaggedRowsAreExactlyColLenWide(t *testing.T) {
+	b := createNewBuffer()
+	rows := [][]string{
+		{"A", "B", "C", "D"},
+		{"1", "2", "3", "4"},
+		{"5", "6", "7"},
+		{"8", "9", "10", "11", "12"},
+		{"13", "14"},
+	}
+	for _, r := range rows {
+		if err := b.contAppendSli(r, false); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if b.colLen != 5 {
+		t.Fatalf("colLen = %d, want 5", b.colLen)
+	}
+	for i, r := range b.cont {
+		if len(r) != b.colLen {
+			t.Errorf("row %d has %d cells, want exactly %d: %q", i, len(r), b.colLen, r)
+		}
+	}
+	if b.cont[0][4] != "NaN" || b.cont[2][3] != "NaN" || b.cont[4][2] != "NaN" {
+		t.Errorf("missing cells must be NaN: %q", b.cont)
+	}
+}
