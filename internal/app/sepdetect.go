@@ -27,7 +27,7 @@ func (sd *sepDetector) sepDetect(s []string) rune {
 	bestCount := 0
 	for _, sep := range commonSeparators {
 		if sd.isValidSeparator(s, sep) {
-			if c := countRuneFast(s[0], sep); c > bestCount {
+			if c := countUnquoted(s[0], sep); c > bestCount {
 				best, bestCount = sep, c
 			}
 		}
@@ -46,19 +46,38 @@ func (sd *sepDetector) isValidSeparator(lines []string, sep rune) bool {
 	}
 
 	// Count separator occurrences in first line
-	firstCount := countRuneFast(lines[0], sep)
+	firstCount := countUnquoted(lines[0], sep)
 	if firstCount == 0 {
 		return false // Separator not found
 	}
 
 	// Verify all lines have same count
 	for i := 1; i < len(lines); i++ {
-		if countRuneFast(lines[i], sep) != firstCount {
+		if countUnquoted(lines[i], sep) != firstCount {
 			return false
 		}
 	}
 
 	return true
+}
+
+// countUnquoted counts r outside double-quoted fields, so a character that
+// only occurs inside quotes ("a;b;c",1) is not mistaken for the delimiter.
+// A line with an unbalanced quote (5'10") is counted as plain text.
+func countUnquoted(s string, r rune) int {
+	if strings.Count(s, "\"")%2 == 1 {
+		return countRuneFast(s, r)
+	}
+	count, quoted := 0, false
+	for _, c := range s {
+		switch {
+		case c == '"':
+			quoted = !quoted
+		case c == r && !quoted:
+			count++
+		}
+	}
+	return count
 }
 
 // Optimized rune counter - much faster than strings.Count for single runes
@@ -103,7 +122,7 @@ func (sd *sepDetector) detectBestSeparator(lines []string) rune {
 		present, total := 0, 0
 		perCount := make(map[int]int)
 		for _, line := range lines {
-			c := countRuneFast(line, sep)
+			c := countUnquoted(line, sep)
 			total += c
 			if c > 0 {
 				present++
