@@ -135,7 +135,7 @@ func loadFileToBufferAsync(fn string, b *Buffer, updateChan chan<- bool, doneCha
 		for scanner.Scan() {
 			line := scanner.Text()
 			//skip empty line
-			if line == "\n" {
+			if line == "" {
 				continue
 			}
 			//ignore first n lines
@@ -230,7 +230,7 @@ func loadFileToBufferAsync(fn string, b *Buffer, updateChan chan<- bool, doneCha
 		for scanner.Scan() {
 			line := scanner.Text()
 			//skip empty line
-			if line == "\n" {
+			if line == "" {
 				continue
 			}
 			//ignore first n lines
@@ -350,7 +350,7 @@ func loadFileToBuffer(fn string, b *Buffer) error {
 		for scanner.Scan() {
 			line := scanner.Text()
 			//skip empty line
-			if line == "\n" {
+			if line == "" {
 				continue
 			}
 			//ignore first n lines
@@ -403,7 +403,7 @@ func loadFileToBuffer(fn string, b *Buffer) error {
 	for scanner.Scan() {
 		line := scanner.Text()
 		//skip empty line
-		if line == "\n" {
+		if line == "" {
 			continue
 		}
 		//ignore first n lines
@@ -464,7 +464,7 @@ func loadPipeToBufferAsync(stdin io.Reader, b *Buffer, updateChan chan<- bool, d
 		for scanner.Scan() {
 			line := scanner.Text()
 			//skip empty line
-			if line == "\n" {
+			if line == "" {
 				continue
 			}
 			//ignore first n lines
@@ -548,7 +548,7 @@ func loadPipeToBufferAsync(stdin io.Reader, b *Buffer, updateChan chan<- bool, d
 	go func() {
 		for scanner.Scan() {
 			line := scanner.Text()
-			if line == "\n" {
+			if line == "" {
 				continue
 			}
 			if args.SkipNum > 0 {
@@ -650,7 +650,7 @@ func loadPipeToBuffer(stdin io.Reader, b *Buffer) error {
 		for scanner.Scan() {
 			line := scanner.Text()
 			//skip empty line
-			if line == "\n" {
+			if line == "" {
 				continue
 			}
 			//ignore first n lines
@@ -692,7 +692,7 @@ func loadPipeToBuffer(stdin io.Reader, b *Buffer) error {
 	for scanner.Scan() {
 		line := scanner.Text()
 		//skip empty line
-		if line == "\n" {
+		if line == "" {
 			continue
 		}
 		//ignore first n lines

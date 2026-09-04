@@ -475,3 +475,17 @@ func TestIntegration_FullWorkflow(t *testing.T) {
 
 	t.Log("Integration test completed successfully")
 }
+
+func TestLoadPipeToBuffer_BlankLines(t *testing.T) {
+	args.setDefault()
+	b := createNewBuffer()
+	if err := loadPipeToBuffer(strings.NewReader("a,b\n1,2\n\n3,4\n\n"), b); err != nil {
+		t.Fatalf("loadPipeToBuffer() error = %v", err)
+	}
+	if b.rowLen != 3 {
+		t.Fatalf("blank lines must be skipped: rowLen = %d, want 3", b.rowLen)
+	}
+	if b.colLen != 2 {
+		t.Errorf("colLen = %d, want 2", b.colLen)
+	}
+}
