@@ -155,6 +155,15 @@ func drawBuffer(b *Buffer, t *tview.Table) {
 	t.SetContent(&bufferContent{b: b})
 }
 
+// halfPageRows returns half the number of rows the table can show, at least 1.
+func halfPageRows(t *tview.Table) int {
+	_, _, _, height := t.GetInnerRect()
+	if half := height / 2; half > 1 {
+		return half
+	}
+	return 1
+}
+
 // add stats data to stats table
 func drawStats(s statsSummary, t *tview.Table) {
 	t.Clear()
@@ -350,7 +359,7 @@ func drawUI(b *Buffer) error {
 		// Ctrl+d - page down (half page)
 		if event.Key() == tcell.KeyCtrlD {
 			row, col := bufferTable.GetSelection()
-			newRow := row + 10 // Move 10 rows down
+			newRow := row + halfPageRows(bufferTable)
 			if newRow >= b.rowLen {
 				newRow = b.rowLen - 1
 			}
@@ -361,7 +370,7 @@ func drawUI(b *Buffer) error {
 		// Ctrl+u - page up (half page)
 		if event.Key() == tcell.KeyCtrlU {
 			row, col := bufferTable.GetSelection()
-			newRow := row - 10 // Move 10 rows up
+			newRow := row - halfPageRows(bufferTable)
 			if newRow < 0 {
 				newRow = 0
 			}
