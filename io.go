@@ -95,6 +95,7 @@ func (p *progressTracker) finish() {
 type loadSource struct {
 	name      string         // file name, or "" when reading from a pipe
 	scanner   *bufio.Scanner // line scanner over the (possibly decompressed) input
+	closer    io.Closer      // underlying file to release once loading ends, nil for pipes
 	totalSize int64          // input size in bytes, 0 when unknown
 }
 
@@ -123,6 +124,9 @@ func detectSeparator(name string, lines []string) rune {
 // the UI can start, later ones are dropped if the channel is full. When
 // showProgress is set a progress line is printed to stdout.
 func loadToBuffer(src loadSource, b *Buffer, updateChan chan<- bool, showProgress bool) error {
+	if src.closer != nil {
+		defer src.closer.Close()
+	}
 	loadProgress.TotalBytes = src.totalSize
 	loadProgress.LoadedBytes = 0
 	loadProgress.IsComplete = false
@@ -255,12 +259,12 @@ func openFileSource(fn string) (loadSource, error) {
 	if !fileInfo.IsDir() && !strings.HasSuffix(fn, ".gz") {
 		fileSize = fileInfo.Size()
 	}
-	scanner, err := getFileScanner(fn)
+	scanner, closer, err := getFileScanner(fn)
 	if err != nil {
 		return loadSource{}, err
 	}
 	scanner.Split(bufio.ScanLines)
-	return loadSource{name: fn, scanner: scanner, totalSize: fileSize}, nil
+	return loadSource{name: fn, scanner: scanner, closer: closer, totalSize: fileSize}, nil
 }
 
 // maxScanTokenSize is the longest single line the loaders accept (bufio default is 64KB).
@@ -315,20 +319,20 @@ func skipLine(line string, sy []string) bool {
 	return false
 }
 
-// get suitable scanner(compressed or not)
-func getFileScanner(fn string) (*bufio.Scanner, error) {
+// get suitable scanner(compressed or not); the returned closer releases the file
+func getFileScanner(fn string) (*bufio.Scanner, io.Closer, error) {
 	info, err := os.Stat(fn)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	//check if fn is a directory
 	if info.IsDir() {
-		return nil, errors.New(fn + " is a directory")
+		return nil, nil, errors.New(fn + " is a directory")
 	}
 
 	file, err := os.Open(fn)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var scanner *bufio.Scanner
@@ -336,7 +340,8 @@ func getFileScanner(fn string) (*bufio.Scanner, error) {
 	if strings.HasSuffix(fn, ".gz") {
 		gzCont, err := gzip.NewReader(file)
 		if err != nil {
-			return nil, err
+			_ = file.Close()
+			return nil, nil, err
 		}
 		scanner = bufio.NewScanner(gzCont)
 	} else {
@@ -348,7 +353,7 @@ func getFileScanner(fn string) (*bufio.Scanner, error) {
 	buf := make([]byte, maxScanTokenSize)
 	scanner.Buffer(buf, maxScanTokenSize)
 
-	return scanner, nil
+	return scanner, file, nil
 }
 
 // check columns that should be displayed
