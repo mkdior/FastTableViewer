@@ -93,6 +93,10 @@ func getHelpContent() string {
   [yellow]Ctrl-d[-]              Page down (half page)
   [yellow]Ctrl-u[-]              Page up (half page)
 
+  [yellow]N + motion[-]          Repeat a motion N times: 5j, 3l, 2w, 4n
+  [yellow]NG / Ngg[-]            Jump to row N
+  [yellow]N Ctrl-d/u[-]          Move N rows
+
 [::b][cyan]🖱️  Mouse Support[white]
   [yellow]Left Click[-]          Select cell
   [yellow]Scroll Wheel[-]        Scroll up/down through rows

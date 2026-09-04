@@ -51,6 +51,7 @@ var isFiltered bool                     // Track if filter is active
 var activeFilters map[int]FilterOptions // Track active filters: column -> query
 var currentCursorColumn int             // Track current cursor column position
 var lastGPress time.Time                // Time of the last 'g' press, for the gg chord
+var pendingCount int                    // Digits typed so far for a vim-style count prefix (0 = none)
 
 // LoadProgress tracks loading progress. It is written by the loader goroutine
 // and read by the UI ticker, so the fields are atomic.
@@ -101,6 +102,7 @@ func initView() {
 	activeFilters = make(map[int]FilterOptions) // Initialize active filters map
 	currentCursorColumn = 0                     // Initialize cursor column
 	lastGPress = time.Time{}                    // Initialize vim navigation state
+	pendingCount = 0
 }
 
 // stop UI

@@ -155,6 +155,47 @@ func drawBuffer(b *Buffer, t *tview.Table) {
 	t.SetContent(&bufferContent{b: b})
 }
 
+// maxCountPrefix caps a typed count so further digits cannot overflow it.
+const maxCountPrefix = 1_000_000_000
+
+// pushCountDigit folds a typed digit into the pending vim-style count prefix.
+// It reports false for non-digits and for a leading '0', which keeps its
+// "first column" binding.
+func pushCountDigit(r rune) bool {
+	if r < '0' || r > '9' {
+		return false
+	}
+	if r == '0' && pendingCount == 0 {
+		return false
+	}
+	if pendingCount < maxCountPrefix {
+		pendingCount = pendingCount*10 + int(r-'0')
+	}
+	return true
+}
+
+// takeCount consumes the pending count prefix. raw is 0 when none was typed;
+// count is raw, or 1 when none was typed, ready to use as a repeat factor.
+func takeCount() (raw, count int) {
+	raw = pendingCount
+	pendingCount = 0
+	if raw < 1 {
+		return raw, 1
+	}
+	return raw, raw
+}
+
+// clampInt limits v to [lo, hi]; hi below lo yields lo.
+func clampInt(v, lo, hi int) int {
+	if v > hi {
+		v = hi
+	}
+	if v < lo {
+		v = lo
+	}
+	return v
+}
+
 // ggTimeout is how long after one 'g' a second 'g' still counts as the gg chord.
 const ggTimeout = 500 * time.Millisecond
 
@@ -308,79 +349,94 @@ func drawUI(b *Buffer) error {
 			userMovedCursor = true
 		}
 
+		// Vim-style count prefix: digits accumulate and the next motion uses
+		// them (5j, 3l, 12G). A leading 0 keeps its "first column" binding.
+		if event.Key() == tcell.KeyRune && pushCountDigit(event.Rune()) {
+			drawFooterText(fileNameStr, statusMessage, strconv.Itoa(pendingCount)+"  |  "+cursorPosStr)
+			return nil
+		}
+		rawCount, count := takeCount()
+		if rawCount > 0 {
+			// Redraw the footer after the motion so the pending count disappears
+			// even when the selection-changed throttle skips this update.
+			defer drawFooterText(fileNameStr, statusMessage, cursorPosStr)
+		}
+		lastRow, lastCol := b.rowLen-1, b.colLen-1
+
 		// Vim-like navigation
 		// h - move left
 		if event.Key() == tcell.KeyRune && event.Rune() == 'h' {
 			row, col := bufferTable.GetSelection()
-			if col > 0 {
-				bufferTable.Select(row, col-1)
-			}
+			bufferTable.Select(row, clampInt(col-count, 0, lastCol))
 			return nil
 		}
 
 		// l - move right
 		if event.Key() == tcell.KeyRune && event.Rune() == 'l' {
 			row, col := bufferTable.GetSelection()
-			if col < b.colLen-1 {
-				bufferTable.Select(row, col+1)
-			}
+			bufferTable.Select(row, clampInt(col+count, 0, lastCol))
 			return nil
 		}
 
 		// j - move down
 		if event.Key() == tcell.KeyRune && event.Rune() == 'j' {
 			row, col := bufferTable.GetSelection()
-			if row < b.rowLen-1 {
-				bufferTable.Select(row+1, col)
-			}
+			bufferTable.Select(clampInt(row+count, 0, lastRow), col)
 			return nil
 		}
 
 		// k - move up
 		if event.Key() == tcell.KeyRune && event.Rune() == 'k' {
 			row, col := bufferTable.GetSelection()
-			if row > 0 {
-				bufferTable.Select(row-1, col)
-			}
+			bufferTable.Select(clampInt(row-count, 0, lastRow), col)
 			return nil
 		}
 
-		// gg - go to first row
+		// gg - go to first row; Ngg goes to row N
 		if event.Key() == tcell.KeyRune && event.Rune() == 'g' {
-			if secondGPress() {
-				bufferTable.Select(0, 0)
+			if !secondGPress() {
+				pendingCount = rawCount // keep the count for the second g
+				return nil
+			}
+			_, col := bufferTable.GetSelection()
+			bufferTable.Select(clampInt(rawCount, 0, lastRow), col)
+			if rawCount == 0 {
 				bufferTable.ScrollToBeginning()
 			}
 			return nil
 		}
 
-		// G - go to last row
+		// G - go to last row; NG goes to row N
 		if event.Key() == tcell.KeyRune && event.Rune() == 'G' {
 			_, col := bufferTable.GetSelection()
-			bufferTable.Select(b.rowLen-1, col)
+			if rawCount > 0 {
+				bufferTable.Select(clampInt(rawCount, 0, lastRow), col)
+				return nil
+			}
+			bufferTable.Select(lastRow, col)
 			bufferTable.ScrollToEnd()
 			return nil
 		}
 
-		// Ctrl+d - page down (half page)
+		// Ctrl+d - half a page down; N Ctrl-d moves N rows
 		if event.Key() == tcell.KeyCtrlD {
 			row, col := bufferTable.GetSelection()
-			newRow := row + halfPageRows(bufferTable)
-			if newRow >= b.rowLen {
-				newRow = b.rowLen - 1
+			step := halfPageRows(bufferTable)
+			if rawCount > 0 {
+				step = rawCount
 			}
-			bufferTable.Select(newRow, col)
+			bufferTable.Select(clampInt(row+step, 0, lastRow), col)
 			return nil
 		}
 
-		// Ctrl+u - page up (half page)
+		// Ctrl+u - half a page up; N Ctrl-u moves N rows
 		if event.Key() == tcell.KeyCtrlU {
 			row, col := bufferTable.GetSelection()
-			newRow := row - halfPageRows(bufferTable)
-			if newRow < 0 {
-				newRow = 0
+			step := halfPageRows(bufferTable)
+			if rawCount > 0 {
+				step = rawCount
 			}
-			bufferTable.Select(newRow, col)
+			bufferTable.Select(clampInt(row-step, 0, lastRow), col)
 			return nil
 		}
 
@@ -401,18 +457,14 @@ func drawUI(b *Buffer) error {
 		// w - move to next column (word forward)
 		if event.Key() == tcell.KeyRune && event.Rune() == 'w' {
 			row, col := bufferTable.GetSelection()
-			if col < b.colLen-1 {
-				bufferTable.Select(row, col+1)
-			}
+			bufferTable.Select(row, clampInt(col+count, 0, lastCol))
 			return nil
 		}
 
 		// b - move to previous column (word backward)
 		if event.Key() == tcell.KeyRune && event.Rune() == 'b' {
 			row, col := bufferTable.GetSelection()
-			if col > 0 {
-				bufferTable.Select(row, col-1)
-			}
+			bufferTable.Select(row, clampInt(col-count, 0, lastCol))
 			return nil
 		}
 
@@ -525,10 +577,10 @@ func drawUI(b *Buffer) error {
 			return nil
 		}
 
-		// Navigate to next search result
+		// Navigate to next search result; Nn skips N matches
 		if event.Key() == tcell.KeyRune && event.Rune() == 'n' {
 			if len(searchResults) > 0 && currentSearchIndex >= 0 {
-				currentSearchIndex = (currentSearchIndex + 1) % len(searchResults)
+				currentSearchIndex = (currentSearchIndex + count) % len(searchResults)
 				bufferTable.Select(searchResults[currentSearchIndex].Row, searchResults[currentSearchIndex].Col)
 				drawBuffer(b, bufferTable) // Redraw to update highlighting
 				drawFooterText(fileNameStr,
@@ -540,13 +592,11 @@ func drawUI(b *Buffer) error {
 			return nil
 		}
 
-		// Navigate to previous search result
+		// Navigate to previous search result; NN skips N matches
 		if event.Key() == tcell.KeyRune && event.Rune() == 'N' {
 			if len(searchResults) > 0 && currentSearchIndex >= 0 {
-				currentSearchIndex--
-				if currentSearchIndex < 0 {
-					currentSearchIndex = len(searchResults) - 1
-				}
+				n := len(searchResults)
+				currentSearchIndex = ((currentSearchIndex-count)%n + n) % n
 				bufferTable.Select(searchResults[currentSearchIndex].Row, searchResults[currentSearchIndex].Col)
 				drawBuffer(b, bufferTable) // Redraw to update highlighting
 				drawFooterText(fileNameStr,

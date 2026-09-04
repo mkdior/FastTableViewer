@@ -54,7 +54,8 @@ controls.
   readable
 - **Statistics and plots**: per-column statistics with an ASCII histogram or
   frequency chart
-- **Vim keybindings**: h/j/k/l, gg/G, 0/$, Ctrl-d/Ctrl-u
+- **Vim keybindings**: h/j/k/l, gg/G, 0/$, Ctrl-d/Ctrl-u, with count
+  prefixes such as `5j` or `12G`
 - **Mouse support**: click to select, scroll to move, click buttons in dialogs
 - **Pipe support**: reads from stdin for use in shell pipelines
 
@@ -197,6 +198,9 @@ G: last row
 $: last column
 Ctrl-d: half a page down
 Ctrl-u: half a page up
+N followed by a motion: repeat it N times, as in vim (`5j`, `3l`, `2w`,
+    `4n`); `NG` or `Ngg` jumps to row N and `N Ctrl-d` or `N Ctrl-u` moves N
+    rows. `0` on its own still goes to the first column.
 
 ### Operations
 
