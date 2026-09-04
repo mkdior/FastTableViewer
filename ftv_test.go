@@ -2,15 +2,23 @@ package main
 
 import "testing"
 
-func Test_main(t *testing.T) {
+func TestSetupFreezeMode(t *testing.T) {
 	tests := []struct {
-		name string
+		header             int
+		wantRows, wantCols int
 	}{
-		{"test"},
+		{-1, 0, 0},
+		{0, 1, 1},
+		{1, 1, 0},
+		{2, 0, 1},
 	}
+	defer args.setDefault()
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			main()
-		})
+		args.Header = tt.header
+		b := createNewBuffer()
+		setupFreezeMode(b)
+		if b.rowFreeze != tt.wantRows || b.colFreeze != tt.wantCols {
+			t.Errorf("freeze mode %d: rowFreeze=%d colFreeze=%d, want %d/%d", tt.header, b.rowFreeze, b.colFreeze, tt.wantRows, tt.wantCols)
+		}
 	}
 }
