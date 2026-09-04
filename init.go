@@ -1,6 +1,8 @@
 package main
 
 import (
+	"sync/atomic"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -49,19 +51,28 @@ var activeFilters map[int]FilterOptions // Track active filters: column -> query
 var currentCursorColumn int             // Track current cursor column position
 var lastKeyWasG bool                    // Track if last key pressed was 'g' for gg navigation
 
-// LoadProgress tracks loading progress
+// LoadProgress tracks loading progress. It is written by the loader goroutine
+// and read by the UI ticker, so the fields are atomic.
 type LoadProgress struct {
-	TotalBytes  int64
-	LoadedBytes int64
-	IsComplete  bool
+	TotalBytes  atomic.Int64
+	LoadedBytes atomic.Int64
+	IsComplete  atomic.Bool
+}
+
+// Reset prepares the tracker for a new load of the given total size (0 when unknown).
+func (lp *LoadProgress) Reset(total int64) {
+	lp.TotalBytes.Store(total)
+	lp.LoadedBytes.Store(0)
+	lp.IsComplete.Store(false)
 }
 
 // GetPercentage returns the loading percentage (0-100)
 func (lp *LoadProgress) GetPercentage() float64 {
-	if lp.TotalBytes <= 0 {
+	total := lp.TotalBytes.Load()
+	if total <= 0 {
 		return 0
 	}
-	percent := float64(lp.LoadedBytes) * 100.0 / float64(lp.TotalBytes)
+	percent := float64(lp.LoadedBytes.Load()) * 100.0 / float64(total)
 	if percent > 100 {
 		percent = 100
 	}

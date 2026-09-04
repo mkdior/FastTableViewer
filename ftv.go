@@ -75,7 +75,7 @@ func startAsyncUpdateHandler(updateChan <-chan bool, doneChan <-chan error) {
 						}
 					}
 
-					if loadProgress.TotalBytes > 0 {
+					if loadProgress.TotalBytes.Load() > 0 {
 						// Show progress bar for files
 						percent := loadProgress.GetPercentage()
 						progressBar := makeProgressBar(percent, 15)

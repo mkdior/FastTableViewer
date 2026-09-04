@@ -127,9 +127,7 @@ func loadToBuffer(src loadSource, b *Buffer, updateChan chan<- bool, showProgres
 	if src.closer != nil {
 		defer src.closer.Close()
 	}
-	loadProgress.TotalBytes = src.totalSize
-	loadProgress.LoadedBytes = 0
-	loadProgress.IsComplete = false
+	loadProgress.Reset(src.totalSize)
 
 	progress := newProgressTracker(src.totalSize, showProgress)
 	defer progress.finish()
@@ -206,7 +204,7 @@ func loadToBuffer(src loadSource, b *Buffer, updateChan chan<- bool, showProgres
 		totalAddedLN++
 		batch++
 		bytesRead := int64(len(line) + 1) // +1 for newline
-		loadProgress.LoadedBytes += bytesRead
+		loadProgress.LoadedBytes.Add(bytesRead)
 		progress.increment(bytesRead)
 		return false, nil
 	}
@@ -266,7 +264,7 @@ func loadToBuffer(src loadSource, b *Buffer, updateChan chan<- bool, showProgres
 		return err
 	}
 
-	loadProgress.IsComplete = true
+	loadProgress.IsComplete.Store(true)
 
 	if updateChan != nil {
 		// Async mode: do not hold up the "loaded" signal for post-processing.
