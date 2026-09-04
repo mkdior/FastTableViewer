@@ -273,7 +273,7 @@ func drawUI(b *Buffer) error {
 	bufferTable = tview.NewTable()
 	bufferTable.SetSelectable(true, true)
 	bufferTable.SetBorders(false)
-	bufferTable.SetSeparator(tview.Borders.Vertical)             // Add subtle vertical separators
+	bufferTable.SetSeparator(tview.Borders.Vertical) // Add subtle vertical separators
 	bufferTable.SetBordersColor(theme.Border)
 	bufferTable.SetBackgroundColor(theme.Background)
 	bufferTable.SetFixed(b.rowFreeze, b.colFreeze)
