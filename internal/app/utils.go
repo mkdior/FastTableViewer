@@ -61,25 +61,25 @@ func I2S(i int) string {
 func getHelpContent() string {
 	helpContent := `[` + theme.tag(theme.Dim) + `]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[-:-:-]
 
-[::b][` + theme.tag(theme.Text) + `]🚀 ftv - Fast Table Viewer[-:-:-]
+[::b][` + theme.tag(theme.Text) + `]ftv - Fast Table Viewer[-:-:-]
 
 [` + theme.tag(theme.Dim) + `]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[-:-:-]
 
-[::b][` + theme.tag(theme.Text) + `]📖 Help Navigation[-:-:-]
+[::b][` + theme.tag(theme.Text) + `]Help Navigation[-:-:-]
   [` + theme.tag(theme.Accent) + `]j/k[-]                 Scroll help text
   [` + theme.tag(theme.Accent) + `]gg/G[-]                Jump to top/bottom
   [` + theme.tag(theme.Accent) + `]Ctrl-d/u[-]            Page down/up
   [` + theme.tag(theme.Accent) + `]? or q or Esc[-]       Close help dialog
 
-[::b][` + theme.tag(theme.Text) + `]🚪 Quit[-:-:-]
+[::b][` + theme.tag(theme.Text) + `]Quit[-:-:-]
   [` + theme.tag(theme.Accent) + `]q[-]                   Quit application
   [` + theme.tag(theme.Accent) + `]Esc[-]                 Close dialog or clear search
 
-[::b][` + theme.tag(theme.Text) + `]⬆️ Movement[-:-:-]
+[::b][` + theme.tag(theme.Text) + `]Movement[-:-:-]
   [` + theme.tag(theme.Accent) + `]h[-]                   Move left (wraps to the last column)
   [` + theme.tag(theme.Accent) + `]l[-]                   Move right (wraps to the first column)
-  [` + theme.tag(theme.Accent) + `]j[-]                   Move down ⬇️
-  [` + theme.tag(theme.Accent) + `]k[-]                   Move up ⬆️
+  [` + theme.tag(theme.Accent) + `]j[-]                   Move down
+  [` + theme.tag(theme.Accent) + `]k[-]                   Move up
 
   [` + theme.tag(theme.Accent) + `]w[-]                   Move to next column (word forward)
   [` + theme.tag(theme.Accent) + `]b[-]                   Move to previous column (word backward)
@@ -97,21 +97,21 @@ func getHelpContent() string {
   [` + theme.tag(theme.Accent) + `]NG / Ngg[-]            Jump to row N
   [` + theme.tag(theme.Accent) + `]N Ctrl-d/u[-]          Move N rows
 
-[::b][` + theme.tag(theme.Text) + `]🖱️  Mouse Support[-:-:-]
+[::b][` + theme.tag(theme.Text) + `]Mouse Support[-:-:-]
   [` + theme.tag(theme.Accent) + `]Left Click[-]          Select cell
   [` + theme.tag(theme.Accent) + `]Scroll Wheel[-]        Scroll up/down through rows
   [` + theme.tag(theme.Accent) + `]Click Buttons[-]       Interact with dialogs and forms
 
-[::b][` + theme.tag(theme.Text) + `]🔍 Search[-:-:-]
+[::b][` + theme.tag(theme.Text) + `]Search[-:-:-]
   [` + theme.tag(theme.Accent) + `]/[-]                   Search for text
                     • Case-insensitive by default
                     • Press [` + theme.tag(theme.Accent) + `]Tab[-] to navigate to checkbox
                     • Press [` + theme.tag(theme.Accent) + `]Space[-] to toggle [` + theme.tag(theme.Accent) + `]Use Regex[-] option
-  [` + theme.tag(theme.Accent) + `]n[-]                   Next search result ⏭
-  [` + theme.tag(theme.Accent) + `]N[-]                   Previous search result ⏮
+  [` + theme.tag(theme.Accent) + `]n[-]                   Next search result
+  [` + theme.tag(theme.Accent) + `]N[-]                   Previous search result
   [` + theme.tag(theme.Accent) + `]Esc[-]                 Clear search highlighting
 
-[::b][` + theme.tag(theme.Text) + `]🎯 Regex Search Examples[-:-:-]
+[::b][` + theme.tag(theme.Text) + `]Regex Search Examples[-:-:-]
   [` + theme.tag(theme.Accent) + `]^start[-]              Match at beginning of cell
   [` + theme.tag(theme.Accent) + `]end$[-]                Match at end of cell
   [` + theme.tag(theme.Accent) + `]\d+[-]                 Match digits (numbers)
@@ -119,36 +119,36 @@ func getHelpContent() string {
   [` + theme.tag(theme.Accent) + `]word1|word2[-]         Match either word (OR)
   [` + theme.tag(theme.Accent) + `][A-Z]+[-]              Match uppercase letters
 
-[::b][` + theme.tag(theme.Text) + `]🔎 Filter[-:-:-]
+[::b][` + theme.tag(theme.Text) + `]Filter[-:-:-]
   [` + theme.tag(theme.Accent) + `]f[-]                   Filter rows by current column value
                     • Operators: contains, equals, starts/ends with, regex, >, <, >=, <=
                     • Apply filters to multiple columns (combined with AND)
                     • Edit filter: press f on filtered column
   [` + theme.tag(theme.Accent) + `]r[-]                   Remove filter from current column
 
-[::b][` + theme.tag(theme.Text) + `]🏷️  Data Type[-:-:-]
+[::b][` + theme.tag(theme.Text) + `]Data Type[-:-:-]
   [` + theme.tag(theme.Accent) + `]t[-]                   Toggle column data type
                     (String → Number → Date → String)
 
-[::b][` + theme.tag(theme.Text) + `]🔃 Sort[-:-:-]
-  [` + theme.tag(theme.Accent) + `]s[-]                   Sort data by column (ascending ⬆️)
-  [` + theme.tag(theme.Accent) + `]S[-]                   Sort data by column (descending ⬇️)
+[::b][` + theme.tag(theme.Text) + `]Sort[-:-:-]
+  [` + theme.tag(theme.Accent) + `]s[-]                   Sort data by column (ascending )
+  [` + theme.tag(theme.Accent) + `]S[-]                   Sort data by column (descending )
 
-[::b][` + theme.tag(theme.Text) + `]📏 Text Wrapping[-:-:-]
+[::b][` + theme.tag(theme.Text) + `]Text Wrapping[-:-:-]
   [` + theme.tag(theme.Accent) + `]W[-]                   Toggle width limit for current column (50 chars)
                     Long columns (>50 chars) are limited automatically
                     A cut cell shows its full value in a floating box
                     while selected (values up to 1000 characters)
 
-[::b][` + theme.tag(theme.Text) + `]📊 Stats[-:-:-]
+[::b][` + theme.tag(theme.Text) + `]Stats[-:-:-]
   [` + theme.tag(theme.Accent) + `]i[-]                   Show stats info for current column
 
-[::b][` + theme.tag(theme.Text) + `]❓ Help[-:-:-]
+[::b][` + theme.tag(theme.Text) + `]Help[-:-:-]
   [` + theme.tag(theme.Accent) + `]?[-]                   Show this help dialog
 
 [` + theme.tag(theme.Dim) + `]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[-:-:-]
 
-[::b][` + theme.tag(theme.Text) + `]💡 Pro Tips:[-:-:-]
+[::b][` + theme.tag(theme.Text) + `]Pro Tips:[-:-:-]
   • Press [` + theme.tag(theme.Accent) + `]gg[-] to jump to the top of any table
   • Use [` + theme.tag(theme.Accent) + `]/[-] for quick searching across all cells
   • Enable [` + theme.tag(theme.Accent) + `]regex[-] mode for powerful pattern matching

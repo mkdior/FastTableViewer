@@ -69,10 +69,10 @@ func (p *progressTracker) display() {
 			percent = 100
 		}
 		progressBar := makeProgressBar(percent, 20)
-		fmt.Printf("\r\033[K📊 Loading: %s | %d lines | %.0f lines/sec", progressBar, p.lineCount, linesPerSec)
+		fmt.Printf("\r\033[KLoading: %s | %d lines | %.0f lines/sec", progressBar, p.lineCount, linesPerSec)
 	} else {
 		// For pipes or when size is unknown
-		fmt.Printf("\r\033[K📊 Loading: %d lines | %.0f lines/sec", p.lineCount, linesPerSec)
+		fmt.Printf("\r\033[KLoading: %d lines | %.0f lines/sec", p.lineCount, linesPerSec)
 	}
 }
 
@@ -88,7 +88,7 @@ func (p *progressTracker) finish() {
 	linesPerSec := float64(p.lineCount) / elapsed
 
 	// Clear the progress line and show final summary
-	fmt.Printf("\r\033[K✓ Loaded %d lines in %.2fs (%.0f lines/sec)\n", p.lineCount, elapsed, linesPerSec)
+	fmt.Printf("\r\033[KLoaded %d lines in %.2fs (%.0f lines/sec)\n", p.lineCount, elapsed, linesPerSec)
 }
 
 // loadSource describes where rows are read from.

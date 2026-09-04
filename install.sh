@@ -79,7 +79,7 @@ main() {
     chmod +x "$PWD/ftv"
     
     echo
-    echo "✓ Successfully installed ftv to: $PWD/ftv"
+    echo "Successfully installed ftv to: $PWD/ftv"
     echo
     echo "To make it globally accessible, run:"
     echo "  sudo mv ftv /usr/local/bin/"

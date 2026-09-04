@@ -33,9 +33,9 @@ func validateDataNotEmpty(b *Buffer, source string) error {
 	if b.rowLen == 0 || dataRows <= 0 {
 		stopView()
 		if b.rowLen == 0 {
-			fmt.Printf("⚠️  %s is empty (no rows)\n", source)
+			fmt.Printf("%s is empty (no rows)\n", source)
 		} else {
-			fmt.Printf("⚠️  %s is empty (only header, no data rows)\n", source)
+			fmt.Printf("%s is empty (only header, no data rows)\n", source)
 		}
 		os.Exit(0)
 	}
@@ -212,11 +212,11 @@ func Execute(version string) {
 				// Check if file exists before attempting to load
 				if _, err := os.Stat(args.FileName); os.IsNotExist(err) {
 					stopView()
-					fmt.Printf("⚠️  File not found: %s\n", args.FileName)
+					fmt.Printf("File not found: %s\n", args.FileName)
 					os.Exit(1)
 				} else if err != nil {
 					stopView()
-					fmt.Printf("⚠️  Cannot access file: %s\n", err)
+					fmt.Printf("Cannot access file: %s\n", err)
 					os.Exit(1)
 				}
 

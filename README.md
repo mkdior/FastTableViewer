@@ -334,8 +334,8 @@ Regex examples:
 4. Press `f` on a filtered column to edit it (an empty value removes it), or
    `r` to remove it.
 
-Filtered column headers are marked with a magnifier and an orange background,
-and a strip above the footer describes the filter on the current column.
+Filtered column headers are marked with asterisks and the alert colour, and a
+strip above the footer describes the filter on the current column.
 
 Operators:
 

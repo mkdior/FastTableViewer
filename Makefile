@@ -33,13 +33,13 @@ lint:
 install: build
 	@echo "Installing $(BINARY_NAME) to $(INSTALL_PATH)..."
 	@sudo cp $(BINARY_NAME) $(INSTALL_PATH)/
-	@echo "✓ Installed successfully"
+	@echo "Installed successfully"
 
 ## uninstall: Remove the binary from system
 uninstall:
 	@echo "Uninstalling $(BINARY_NAME) from $(INSTALL_PATH)..."
 	@sudo rm -f $(INSTALL_PATH)/$(BINARY_NAME)
-	@echo "✓ Uninstalled successfully"
+	@echo "Uninstalled successfully"
 
 ## release: Create a new release for the tag at HEAD (requires goreleaser)
 release:

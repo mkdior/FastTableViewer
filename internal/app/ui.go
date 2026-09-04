@@ -31,11 +31,11 @@ func buildFilterInfoStr(currentColumn int) string {
 			columnName = b.cont[0][currentColumn]
 		}
 
-		return fmt.Sprintf("🔎 Filter Active: [%s] %s \"%s\"  |  %d filters total  |  Press 'r' to remove this filter", columnName, opts.Operator, opts.Query, len(activeFilters))
+		return fmt.Sprintf("Filter Active: [%s] %s \"%s\"  |  %d filters total  |  Press 'r' to remove this filter", columnName, opts.Operator, opts.Query, len(activeFilters))
 	}
 
 	// Show summary if cursor is not on a filtered column
-	return fmt.Sprintf("🔎 %d filters active  |  Navigate to filtered column and press 'r' to remove", len(activeFilters))
+	return fmt.Sprintf("%d filters active  |  Navigate to filtered column and press 'r' to remove", len(activeFilters))
 }
 
 // searchMatchSet mirrors searchResults as a set so cell styling is O(1) per cell.
@@ -100,7 +100,7 @@ func (c *bufferContent) GetCell(r, col int) *tview.TableCell {
 		// Add filter indicator if this column has a filter applied
 		if isFiltered {
 			if _, hasFilter := activeFilters[col]; hasFilter {
-				cellText = "🔎 " + cellText + " 🔎"
+				cellText = "* " + cellText + " *"
 				backgroundColor = theme.Alert
 				color = theme.Background
 			}
@@ -545,7 +545,7 @@ func drawUI(b *Buffer) error {
 			})
 			form.SetButtonsAlign(tview.AlignCenter)
 			form.SetBorder(true)
-			title := " 🔍 Search - Tab to navigate, Enter to search, Esc to cancel "
+			title := " Search - Tab to navigate, Enter to search, Esc to cancel "
 			form.SetTitle(title)
 			form.SetTitleAlign(tview.AlignCenter)
 			styleForm(form)
@@ -747,9 +747,9 @@ func drawUI(b *Buffer) error {
 			filterForm.SetButtonsAlign(tview.AlignCenter)
 			filterForm.SetBorder(true)
 
-			filterTitle := fmt.Sprintf(" 🔎 Filter Column %d - Enter to filter, Esc to cancel ", column)
+			filterTitle := fmt.Sprintf(" Filter Column %d - Enter to filter, Esc to cancel ", column)
 			if _, exists := activeFilters[column]; exists {
-				filterTitle = fmt.Sprintf(" 🔎 Edit Filter for Column %d (empty value to remove) - Enter to apply, Esc to cancel ", column)
+				filterTitle = fmt.Sprintf(" Edit Filter for Column %d (empty value to remove) - Enter to apply, Esc to cancel ", column)
 			}
 			filterForm.SetTitle(filterTitle)
 			filterForm.SetTitleAlign(tview.AlignCenter)
@@ -1021,7 +1021,7 @@ func showHelpDialog() {
 	// Make help text scrollable with modern styling
 	helpText.SetScrollable(true)
 	helpText.SetBorder(true)
-	helpText.SetTitle(" ❓ Help - Press ? or q or Esc to close ")
+	helpText.SetTitle(" Help - Press ? or q or Esc to close ")
 	helpText.SetTitleAlign(tview.AlignCenter)
 	helpText.SetBorderColor(theme.Accent)
 	helpText.SetBackgroundColor(theme.Background)
@@ -1111,11 +1111,11 @@ func showStatsDialog(statsS statsSummary, columnName string, colType int) {
 	statsTable.SetSelectedStyle(theme.highlightStyle())
 
 	typeName := type2name(colType)
-	title := fmt.Sprintf(" 📊 Statistics: %s [%s] ", columnName, typeName)
+	title := fmt.Sprintf(" Statistics: %s [%s] ", columnName, typeName)
 
 	// Add filter indicator if data is filtered
 	if isFiltered && len(activeFilters) > 0 {
-		title = fmt.Sprintf(" 📊 Statistics: %s [%s] (Filtered Data - %d filters active) ", columnName, typeName, len(activeFilters))
+		title = fmt.Sprintf(" Statistics: %s [%s] (Filtered Data - %d filters active) ", columnName, typeName, len(activeFilters))
 	}
 
 	statsTable.SetTitle(title)
@@ -1127,7 +1127,7 @@ func showStatsDialog(statsS statsSummary, columnName string, colType int) {
 		SetText(statsS.getPlot()).
 		SetTextAlign(tview.AlignLeft)
 	plotView.SetBorder(true)
-	plotView.SetTitle(" 📈 Visual Distribution ")
+	plotView.SetTitle(" Visual Distribution ")
 	plotView.SetTitleAlign(tview.AlignCenter)
 	plotView.SetBorderColor(theme.Dim)
 	plotView.SetBackgroundColor(theme.Background)
