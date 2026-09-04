@@ -2,7 +2,7 @@
 
 **A fast, feature-rich CSV/TSV/delimited file viewer for the command line**
 
-![test](https://github.com/mkdior/FastTableViewer/workflows/test/badge.svg)
+[![test](https://github.com/mkdior/FastTableViewer/actions/workflows/test.yml/badge.svg)](https://github.com/mkdior/FastTableViewer/actions/workflows/test.yml)
 [![GitHub license](https://img.shields.io/github/license/mkdior/FastTableViewer.svg)](https://github.com/mkdior/FastTableViewer/blob/main/LICENSE)
 [![GitHub release](https://img.shields.io/github/release/mkdior/FastTableViewer.svg)](https://github.com/mkdior/FastTableViewer/releases)
 
@@ -70,15 +70,43 @@ curl -sSL https://raw.githubusercontent.com/mkdior/FastTableViewer/main/install.
 sudo mv ftv /usr/local/bin/
 ```
 
-### Pre-built binaries and packages
+### Manual download
 
-Download from the
-[releases page](https://github.com/mkdior/FastTableViewer/releases):
+Every tagged release on the
+[releases page](https://github.com/mkdior/FastTableViewer/releases) ships a
+single static binary per platform, built by the `release` GitHub Actions
+workflow:
 
-- Archives (`ftv_<version>_<OS>_<arch>.tar.gz`, `.zip` on Windows) for Linux
-  (x86_64, arm64, armv7, i386), macOS (Intel, Apple Silicon) and Windows
-  (x86_64, i386)
-- `.deb` and `.rpm` packages for Linux x86_64 and arm64
+- Archives named `ftv_<version>_<OS>_<arch>.tar.gz` (`.zip` on Windows) for
+  Linux (x86_64, arm64, armv7, i386), macOS (Intel, Apple Silicon) and
+  Windows (x86_64, i386), each containing the `ftv` binary, LICENSE and
+  README
+- `.deb` and `.rpm` packages for Linux
+- `checksums.txt` with SHA-256 sums of every asset
+
+Pick the archive for your system, extract it and put `ftv` somewhere on your
+`PATH`. For example, on Linux x86_64 (adjust the version and platform):
+
+```bash
+VERSION=0.9.0
+curl -LO https://github.com/mkdior/FastTableViewer/releases/download/v${VERSION}/ftv_${VERSION}_Linux_x86_64.tar.gz
+tar -xzf ftv_${VERSION}_Linux_x86_64.tar.gz ftv
+
+# system-wide
+sudo install -m 755 ftv /usr/local/bin/ftv
+
+# or just for your user (make sure ~/.local/bin is on your PATH)
+install -D -m 755 ftv ~/.local/bin/ftv
+```
+
+Platform strings: `Linux_x86_64`, `Linux_arm64`, `Linux_armv7`,
+`Linux_i386`, `Darwin_x86_64`, `Darwin_arm64`, `Windows_x86_64.zip`,
+`Windows_i386.zip`.
+
+On macOS, Gatekeeper may block an unsigned binary the first time; run
+`xattr -d com.apple.quarantine ftv` before installing it.
+
+Packages:
 
 ```bash
 sudo dpkg -i ftv_*.deb      # Debian/Ubuntu
