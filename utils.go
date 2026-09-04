@@ -61,7 +61,7 @@ func I2S(i int) string {
 func getHelpContent() string {
 	helpContent := `[::b][yellow]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[white]
 
-[::b][cyan]🚀 TV - Modern Terminal Table Viewer[-][white]
+[::b][cyan]🚀 ftv - Fast Table Viewer[-][white]
 
 [::b][yellow]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[white]
 
@@ -117,11 +117,9 @@ func getHelpContent() string {
 
 [::b][orange]🔎 Filter[white]
   [yellow]f[-]                   Filter rows by current column value
-                    • Apply filters to multiple columns
+                    • Operators: contains, equals, starts/ends with, regex, >, <, >=, <=
+                    • Apply filters to multiple columns (combined with AND)
                     • Edit filter: press f on filtered column
-                    OR: same cell has either term
-                    AND: same cell has both terms
-                    ROR: different rows, any match (uppercase only)
   [yellow]r[-]                   Remove filter from current column
 
 [::b][purple]🏷️  Data Type[white]
