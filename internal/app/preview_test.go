@@ -226,6 +226,9 @@ func TestCellPreviewPositions(t *testing.T) {
 	if _, err := parsePreviewPosition("sideways"); err == nil {
 		t.Error("unknown positions must be rejected")
 	}
+	if pos, err := parsePreviewPosition(""); err != nil || pos != previewBottom {
+		t.Errorf("an empty setting must mean the default, bottom; got %v %v", pos, err)
+	}
 }
 
 func TestCellsArePaddedToColumnWidth(t *testing.T) {

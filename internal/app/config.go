@@ -229,11 +229,11 @@ func dumpConfig(w io.Writer) error {
 	sb.WriteString("[clipboard]\n")
 	sb.WriteString("command = \"\"\n")
 	sb.WriteString("osc52   = true\n")
-	sb.WriteString("\n# Preview: where the box with the full value of a cut cell appears: \"cursor\" lays\n")
-	sb.WriteString("# it over the selected cell, \"top\" and \"bottom\" centre it under the header or at\n")
-	sb.WriteString("# the bottom of the table.\n\n")
+	sb.WriteString("\n# Preview: where the box with the full value of a cut cell appears: \"bottom\" and\n")
+	sb.WriteString("# \"top\" centre it at the bottom of the table or under the header, \"cursor\" lays it\n")
+	sb.WriteString("# over the selected cell.\n\n")
 	sb.WriteString("[preview]\n")
-	sb.WriteString("position = \"cursor\"\n")
+	sb.WriteString("position = \"bottom\"\n")
 	_, err := io.WriteString(w, sb.String())
 	return err
 }

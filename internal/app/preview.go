@@ -22,23 +22,23 @@ const (
 type previewPosition int
 
 const (
-	previewAtCursor previewPosition = iota // over the selected cell, so the value pops out in place
+	previewBottom   previewPosition = iota // at the bottom of the table, centred (default)
 	previewTop                             // under the header, centred
-	previewBottom                          // at the bottom of the table, centred
+	previewAtCursor                        // over the selected cell, so the value pops out in place
 )
 
 // previewPos is the active placement; the [preview] config section sets it.
-var previewPos = previewAtCursor
+var previewPos = previewBottom
 
 // parsePreviewPosition reads the config spelling of a placement.
 func parsePreviewPosition(s string) (previewPosition, error) {
 	switch strings.ToLower(strings.TrimSpace(s)) {
-	case "", "cursor":
-		return previewAtCursor, nil
+	case "", "bottom":
+		return previewBottom, nil
 	case "top":
 		return previewTop, nil
-	case "bottom":
-		return previewBottom, nil
+	case "cursor":
+		return previewAtCursor, nil
 	}
 	return 0, fmt.Errorf("unknown preview position %q; use cursor, top or bottom", s)
 }

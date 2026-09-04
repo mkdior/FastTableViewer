@@ -419,12 +419,13 @@ on any column to toggle its limit. Cells are never wrapped onto several lines.
 
 While the cursor is on a cut cell, a floating box shows the full value,
 word-wrapped and titled with the column name, and disappears when you move
-on. By default it is laid over the selected cell so the value pops out in
-place: its first line starts where the cell's text starts, or its last line
-does when there is no room below. `position` in the `[preview]` section of
-the config file moves it: `cursor` (default), `top` (centred under the
-header) or `bottom` (centred at the bottom of the table). Values longer than
-1000 characters, or too tall to fit in half the table, are not previewed.
+on. By default it is centred at the bottom of the table. `position` in the
+`[preview]` section of the config file moves it: `bottom` (default), `top`
+(centred under the header) or `cursor`, which lays the box over the selected
+cell so the value pops out in place, its first line starting where the cell's
+text starts (or its last line ending there when there is no room below).
+Values longer than 1000 characters, or too tall to fit in half the table, are
+not previewed.
 
 ## Advanced Examples
 
@@ -504,13 +505,13 @@ alert      = "#ff5f5f"
 
 ### [preview]
 
-position: `cursor` (default) lays the full-value box over the selected cell;
-    `top` and `bottom` centre it under the header or at the bottom of the
-    table
+position: `bottom` (default) and `top` centre the full-value box at the
+    bottom of the table or under the header; `cursor` lays it over the
+    selected cell
 
 ```toml
 [preview]
-position = "bottom"
+position = "cursor"
 ```
 
 ### [clipboard]
