@@ -66,13 +66,10 @@ deps:
 ## check: Run tests and linters
 check: test lint
 
-## version: Update version in all files
+## version: Update the fallback version in ftv.go (usage: make version VERSION=x.y.z)
 version:
 	@echo "Updating version to $(VERSION)..."
-	@sed -i "" "s/version: '.*'/version: '$(VERSION)'/g" snap/snapcraft.yaml
-	@sed -i "" "s/v[0-9]\.[0-9]\.[0-9]/v$(VERSION)/g" README.md
-	@sed -i "" "s/Version: \".*\"/Version: \"$(VERSION)\"/g" ftv.go
-	@sed -i "" "s/pkgver=.*/pkgver=$(VERSION)/g" PKGBUILD
+	@sed -i.bak 's/^var version = ".*"/var version = "$(VERSION)"/' ftv.go && rm -f ftv.go.bak
 
 ## help: Show this help message
 help:
