@@ -174,12 +174,26 @@ func loadToBuffer(src loadSource, b *Buffer, updateChan chan<- bool, showProgres
 	}
 
 	batch := 0
+	selectColumns := len(args.ShowNum) != 0 || len(args.HideNum) != 0
+	var visCol []int // resolved once against the first row when --columns/--hide-columns are set
 	// appendLine parses and stores one line; stop reports that --lines was reached.
 	appendLine := func(line string) (stop bool, err error) {
 		if args.NLine > 0 && totalAddedLN >= args.NLine {
 			return true, nil
 		}
-		if err := addDRToBuffer(b, line, args.ShowNum, args.HideNum); err != nil {
+		fields, err := lineCSVParseFast(line, b.sep)
+		if err != nil {
+			return true, err
+		}
+		if selectColumns {
+			if visCol == nil {
+				if visCol, err = getVisCol(args.ShowNum, args.HideNum, len(fields)); err != nil {
+					return true, err
+				}
+			}
+			fields = projectColumns(fields, visCol)
+		}
+		if err := b.contAppendSli(fields, args.Strict); err != nil {
 			return true, err
 		}
 		totalAddedLN++
@@ -440,33 +454,32 @@ func lineCSVParseFast(s string, sep rune) ([]string, error) {
 	return lineCSVParse(s, sep)
 }
 
+// projectColumns keeps only the given column indexes, in order. Rows shorter
+// than the header are padded with NaN so a ragged line cannot abort the load.
+func projectColumns(fields []string, visCol []int) []string {
+	out := make([]string, 0, len(visCol))
+	for _, i := range visCol {
+		if i < len(fields) {
+			out = append(out, fields[i])
+		} else {
+			out = append(out, "NaN")
+		}
+	}
+	return out
+}
+
 // add displayable(according to user's input argument) RowArray(covert line to array) To Buffer
 func addDRToBuffer(b *Buffer, line string, showNum, hideNum []int) error {
-	var err error
-	lineCSVParts, err := lineCSVParseFast(line, b.sep)
+	fields, err := lineCSVParseFast(line, b.sep)
 	if err != nil {
 		return err
 	}
 	if len(showNum) != 0 || len(hideNum) != 0 {
-		// Pre-allocate slice with known capacity
-		visCol, err := getVisCol(showNum, hideNum, len(lineCSVParts))
+		visCol, err := getVisCol(showNum, hideNum, len(fields))
 		if err != nil {
 			return err
 		}
-		lineSli := make([]string, 0, len(visCol))
-		for _, i := range visCol {
-			lineSli = append(lineSli, lineCSVParts[i])
-		}
-		err = b.contAppendSli(lineSli, args.Strict)
-		if err != nil {
-			return err
-		}
-
-	} else {
-		err := b.contAppendSli(lineCSVParts, args.Strict)
-		if err != nil {
-			return err
-		}
+		fields = projectColumns(fields, visCol)
 	}
-	return err
+	return b.contAppendSli(fields, args.Strict)
 }

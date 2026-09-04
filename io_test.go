@@ -613,3 +613,21 @@ func TestLineCSVParseFast_MultiByteSeparator(t *testing.T) {
 		t.Errorf("lineCSVParseFast() = %q, want %q", got, want)
 	}
 }
+
+func TestLoadFileToBuffer_ColumnsOnRaggedRows(t *testing.T) {
+	args.setDefault()
+	args.ShowNum = []int{1, 4}
+	defer args.setDefault()
+
+	b := createNewBuffer()
+	if err := loadFileToBuffer("./data/test/inconsistent_columns.csv", b); err != nil {
+		t.Fatalf("a short row must not abort --columns loading: %v", err)
+	}
+	if b.colLen != 2 {
+		t.Fatalf("colLen = %d, want 2", b.colLen)
+	}
+	// Row "5,6,7" has no 4th column; it must be padded rather than rejected.
+	if got := b.cont[2]; got[0] != "5" || got[1] != "NaN" {
+		t.Errorf("short row projected to %q, want [5 NaN]", got)
+	}
+}
