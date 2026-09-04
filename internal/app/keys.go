@@ -128,6 +128,10 @@ func runAction(act action, rawCount, count int) {
 		toggleColumnType()
 	case actToggleWidth:
 		toggleColumnWidth()
+	case actYank:
+		yankCells(row, col, row, col)
+	case actYankRow:
+		yankCells(row, 0, row, numCols-1)
 	case actStats:
 		showCurrentColumnStats()
 	case actHelp:

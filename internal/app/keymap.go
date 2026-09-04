@@ -38,6 +38,8 @@ const (
 	actHelp         action = "help"
 	actQuit         action = "quit"
 	actCancel       action = "cancel"
+	actYank         action = "yank"
+	actYankRow      action = "yank_row"
 )
 
 // actionInfo describes an action for the help dialog and the config file.
@@ -74,6 +76,8 @@ var actionCatalog = []struct {
 	{actionInfo{actSortAsc, "Sort and types", "Sort ascending by the current column", false}, []string{"s"}},
 	{actionInfo{actSortDesc, "Sort and types", "Sort descending by the current column", false}, []string{"S"}},
 	{actionInfo{actToggleType, "Sort and types", "Toggle the column type (String, Number, Date)", false}, []string{"t"}},
+	{actionInfo{actYank, "Yank", "Copy the current cell to the clipboard", false}, []string{"y"}},
+	{actionInfo{actYankRow, "Yank", "Copy the current row to the clipboard (tab-separated)", false}, []string{"Y"}},
 	{actionInfo{actToggleWidth, "View", "Toggle the 50 character width limit on the current column", false}, []string{"W"}},
 	{actionInfo{actStats, "View", "Statistics for the current column", false}, []string{"i"}},
 	{actionInfo{actHelp, "View", "Show this help", false}, []string{"?"}},

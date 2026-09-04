@@ -336,6 +336,12 @@ func drawUI(b *Buffer) error {
 		AddText(statusMessage, false, tview.AlignCenter, theme.Text).
 		AddText(cursorPosStr, false, tview.AlignRight, theme.Dim)
 
+	// Keep a handle on the screen so yanks can emit the OSC 52 clipboard escape.
+	app.SetBeforeDrawFunc(func(screen tcell.Screen) bool {
+		screenRef = screen
+		return false
+	})
+
 	//UI init - add pages to UI container
 	UI = tview.NewPages()
 	mainView = newCellPreview(mainPage)

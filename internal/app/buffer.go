@@ -801,6 +801,37 @@ func (b *Buffer) selectBySearch(s string) {
 	}
 }
 
+// cellBlock copies the rectangle of cells rows r1..r2, columns c1..c2 (both
+// inclusive, clamped to the table); missing cells in short rows are "".
+func (b *Buffer) cellBlock(r1, c1, r2, c2 int) [][]string {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	if r1 > r2 {
+		r1, r2 = r2, r1
+	}
+	if c1 > c2 {
+		c1, c2 = c2, c1
+	}
+	r1, r2 = clampInt(r1, 0, b.rowLen-1), clampInt(r2, 0, b.rowLen-1)
+	c1, c2 = clampInt(c1, 0, b.colLen-1), clampInt(c2, 0, b.colLen-1)
+	if b.rowLen == 0 || b.colLen == 0 {
+		return nil
+	}
+	out := make([][]string, 0, r2-r1+1)
+	for r := r1; r <= r2; r++ {
+		row := make([]string, 0, c2-c1+1)
+		for c := c1; c <= c2; c++ {
+			if c < len(b.cont[r]) {
+				row = append(row, b.cont[r][c])
+			} else {
+				row = append(row, "")
+			}
+		}
+		out = append(out, row)
+	}
+	return out
+}
+
 // FilterOptions defines the parameters for a column filter.
 type FilterOptions struct {
 	Query         string

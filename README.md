@@ -265,6 +265,8 @@ s: sort ascending by the current column
 S: sort descending by the current column
 t: toggle the column type (String, Number, Date)
 W: toggle the width limit on the current column
+y: copy the current cell to the clipboard
+Y: copy the current row to the clipboard, cells separated by tabs
 i: statistics for the current column
 ?: help
 q: quit
@@ -368,6 +370,17 @@ Comparison (`>`, `<`, `>=`, `<=`): numeric comparison on any column; cells
 Text operators are case-insensitive unless `Case Sensitive` is checked. An
 invalid regex or a non-numeric threshold matches nothing.
 
+### Yank
+
+`y` copies the current cell and `Y` the current row to the system clipboard.
+Rows and blocks are tab-separated with one line per row, so they paste
+straight into a spreadsheet or a shell. ftv uses every channel that can
+reach the clipboard: the OSC 52 terminal escape (tmux forwards it when
+`set -g set-clipboard on` is set; payloads over 1MB skip it) and a clipboard
+tool when one is installed: `clip.exe` under WSL, `pbcopy` on macOS,
+`wl-copy` on Wayland, `xclip` or `xsel` on X11. The footer reports which
+channels were used. Yanks over 50MB are refused.
+
 ### Column width limits
 
 Columns whose cells exceed 50 characters in the first 100 rows are limited to
@@ -426,7 +439,8 @@ Actions: `move_left`, `move_right`, `move_down`, `move_up`, `next_column`,
     `prev_column`, `first_row`, `last_row`, `first_column`, `last_column`,
     `half_page_down`, `half_page_up`, `search`, `next_match`, `prev_match`,
     `cancel`, `filter`, `remove_filter`, `sort_asc`, `sort_desc`,
-    `toggle_type`, `toggle_width`, `stats`, `help`, `quit`
+    `toggle_type`, `yank`, `yank_row`, `toggle_width`, `stats`, `help`,
+    `quit`
 
 ```toml
 [keys]
