@@ -263,10 +263,18 @@ func drawFooterText(lstr, cstr, rstr string) {
 		AddText(rstr, false, tview.AlignRight, theme.Dim)
 }
 
+// pageRows returns the number of data rows the table can show, at least 1.
+func pageRows(t *tview.Table) int {
+	_, _, _, height := t.GetInnerRect()
+	if rows := height - b.rowFreeze; rows > 1 {
+		return rows
+	}
+	return 1
+}
+
 // halfPageRows returns half the number of rows the table can show, at least 1.
 func halfPageRows(t *tview.Table) int {
-	_, _, _, height := t.GetInnerRect()
-	if half := height / 2; half > 1 {
+	if half := pageRows(t) / 2; half > 1 {
 		return half
 	}
 	return 1
@@ -411,13 +419,6 @@ func drawUI(b *Buffer) error {
 
 		// Pass through other mouse events to default handler
 		return action, event
-	})
-
-	//bufferTable quit event
-	bufferTable.SetDoneFunc(func(key tcell.Key) {
-		if key == tcell.KeyEscape {
-			app.Stop()
-		}
 	})
 
 	return nil

@@ -19,9 +19,10 @@ var (
 )
 
 // handleTableKey is the table's input capture: it turns key events into
-// actions through the active keymap. Digits form a count prefix, unbound
-// printable keys are swallowed so tview's own bindings cannot bypass the
-// keymap, and unbound special keys pass through to tview.
+// actions through the active keymap. Digits form a count prefix. Every
+// unbound key is swallowed, so tview's own table bindings (arrows, paging,
+// Home/End, Escape) cannot bypass the keymap once a user remaps them.
+// Ctrl-C is handled by tview before it reaches the table.
 func handleTableKey(event *tcell.EventKey) *tcell.EventKey {
 	// Vim-style count prefix: digits accumulate and the next action uses
 	// them (5j, 3l, 12G). A leading 0 is left to the keymap (first_column).
@@ -48,10 +49,7 @@ func handleTableKey(event *tcell.EventKey) *tcell.EventKey {
 	pendingChord = nil
 	if act == "" {
 		pendingCount = 0
-		if event.Key() == tcell.KeyRune {
-			return nil
-		}
-		return event
+		return nil
 	}
 
 	rawCount, count := takeCount()
@@ -123,6 +121,12 @@ func runAction(act action, rawCount, count int) {
 			step = rawCount
 		}
 		if act == actHalfPageUp {
+			step = -step
+		}
+		bufferTable.Select(clampInt(row+step, firstRow, lastRow), col)
+	case actPageDown, actPageUp:
+		step := pageRows(bufferTable) * count
+		if act == actPageUp {
 			step = -step
 		}
 		bufferTable.Select(clampInt(row+step, firstRow, lastRow), col)

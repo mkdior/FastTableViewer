@@ -121,3 +121,18 @@ func TestKeymapValidateReportsConflicts(t *testing.T) {
 		t.Errorf("q should be unbound after set(nil), got %q", act)
 	}
 }
+
+func TestKeymapRejectsDigitBindings(t *testing.T) {
+	km := defaultKeymap()
+	five, _ := parseChord("5")
+	km.set(actQuit, [][]keyStroke{five})
+	if err := km.validate(); err == nil || !strings.Contains(err.Error(), "reserved") {
+		t.Errorf("binding a digit must be rejected, got %v", err)
+	}
+	km = defaultKeymap()
+	gzero, _ := parseChord("g 0")
+	km.set(actQuit, [][]keyStroke{gzero})
+	if err := km.validate(); err != nil {
+		t.Errorf("0 is not a count digit and may be bound, got %v", err)
+	}
+}

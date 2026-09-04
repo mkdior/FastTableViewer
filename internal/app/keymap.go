@@ -25,6 +25,8 @@ const (
 	actLastColumn   action = "last_column"
 	actHalfPageDown action = "half_page_down"
 	actHalfPageUp   action = "half_page_up"
+	actPageDown     action = "page_down"
+	actPageUp       action = "page_up"
 	actSearch       action = "search"
 	actNextMatch    action = "next_match"
 	actPrevMatch    action = "prev_match"
@@ -64,12 +66,14 @@ var actionCatalog = []struct {
 	{actionInfo{actMoveUp, "Movement", "Move up", true}, []string{"k", "up"}},
 	{actionInfo{actNextColumn, "Movement", "Next column", true}, []string{"w"}},
 	{actionInfo{actPrevColumn, "Movement", "Previous column", true}, []string{"b"}},
-	{actionInfo{actFirstRow, "Movement", "First row; with a count, row N", true}, []string{"g g"}},
-	{actionInfo{actLastRow, "Movement", "Last row; with a count, row N", true}, []string{"G"}},
+	{actionInfo{actFirstRow, "Movement", "First row; with a count, row N", true}, []string{"g g", "home"}},
+	{actionInfo{actLastRow, "Movement", "Last row; with a count, row N", true}, []string{"G", "end"}},
 	{actionInfo{actFirstColumn, "Movement", "First column", true}, []string{"0"}},
 	{actionInfo{actLastColumn, "Movement", "Last column", true}, []string{"$"}},
 	{actionInfo{actHalfPageDown, "Movement", "Half a page down; with a count, N rows", true}, []string{"ctrl+d"}},
 	{actionInfo{actHalfPageUp, "Movement", "Half a page up; with a count, N rows", true}, []string{"ctrl+u"}},
+	{actionInfo{actPageDown, "Movement", "A page down; with a count, N pages", true}, []string{"pgdn", "ctrl+f"}},
+	{actionInfo{actPageUp, "Movement", "A page up; with a count, N pages", true}, []string{"pgup", "ctrl+b"}},
 	{actionInfo{actSearch, "Search", "Search (plain text or regex)", false}, []string{"/"}},
 	{actionInfo{actNextMatch, "Search", "Next match; with a count, N matches ahead", true}, []string{"n"}},
 	{actionInfo{actPrevMatch, "Search", "Previous match; with a count, N matches back", true}, []string{"N"}},
@@ -273,8 +277,9 @@ func chordEqual(a, b []keyStroke) bool {
 	return true
 }
 
-// validate reports a key sequence bound to two actions, or one that is a
-// prefix of another, since neither could be resolved unambiguously.
+// validate reports a key sequence bound to two actions, one that is a prefix
+// of another (neither could be resolved unambiguously), or a binding on a
+// digit 1-9, which the count prefix consumes before the keymap sees it.
 func (km *keymap) validate() error {
 	type owner struct {
 		act   action
@@ -283,6 +288,11 @@ func (km *keymap) validate() error {
 	var all []owner
 	for a, chords := range km.bindings {
 		for _, c := range chords {
+			for _, k := range c {
+				if k.key == tcell.KeyRune && k.ch >= '1' && k.ch <= '9' {
+					return fmt.Errorf("key %q (%s): digits 1-9 are reserved for count prefixes", chordString(c), a)
+				}
+			}
 			all = append(all, owner{a, c})
 		}
 	}

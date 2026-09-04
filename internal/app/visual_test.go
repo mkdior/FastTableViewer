@@ -133,3 +133,41 @@ func TestSingleYanks(t *testing.T) {
 		t.Errorf("yanks = %v", *ran)
 	}
 }
+
+func TestUnboundKeysNeverReachTview(t *testing.T) {
+	setupVisualTable(t)
+	a, _ := parseChord("a")
+	keys.set(actMoveLeft, [][]keyStroke{a}) // Left is no longer bound
+	keys.set(actCancel, nil)                // Esc is unbound; it used to quit via tview's done func
+
+	bufferTable.Select(2, 2)
+	for _, k := range []tcell.Key{tcell.KeyLeft, tcell.KeyEscape, tcell.KeyEnter, tcell.KeyTab, tcell.KeyF5} {
+		if ev := handleTableKey(tcell.NewEventKey(k, 0, tcell.ModNone)); ev != nil {
+			t.Errorf("unbound key %v must be swallowed, was passed to tview", k)
+		}
+	}
+	if row, col := bufferTable.GetSelection(); row != 2 || col != 2 {
+		t.Errorf("unbound keys must not move the cursor, now at %d,%d", row, col)
+	}
+	press(t, "a")
+	if _, col := bufferTable.GetSelection(); col != 1 {
+		t.Errorf("the remapped key must move left, col = %d", col)
+	}
+}
+
+func TestPagingActions(t *testing.T) {
+	setupVisualTable(t)
+	bufferTable.SetRect(0, 0, 40, 3) // header plus two visible rows
+	press(t, "pgdn")
+	if row, _ := bufferTable.GetSelection(); row != 3 {
+		t.Errorf("PgDn should move a page (2 rows) from row 1, got %d", row)
+	}
+	press(t, "end")
+	if row, _ := bufferTable.GetSelection(); row != 4 {
+		t.Errorf("End should go to the last row, got %d", row)
+	}
+	press(t, "home")
+	if row, _ := bufferTable.GetSelection(); row != 1 {
+		t.Errorf("Home should go to the first data row, got %d", row)
+	}
+}

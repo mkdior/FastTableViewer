@@ -247,6 +247,9 @@ G: last row
 $: last column
 Ctrl-d: half a page down
 Ctrl-u: half a page up
+PgDn, Ctrl-f: a page down
+PgUp, Ctrl-b: a page up
+Home, End: first or last row
 N followed by a motion: repeat it N times, as in vim (`5j`, `3l`, `2w`,
     `4n`); `NG` or `Ngg` jumps to row N and `N Ctrl-d` or `N Ctrl-u` moves N
     rows. `0` on its own still goes to the first column.
@@ -451,8 +454,10 @@ output as the config file and edit what you want to change.
 ### [keys]
 
 One line per action, `action = key` or `action = [key, key]`. An empty list
-unbinds the action. Digits are reserved for count prefixes and cannot be
-bound, except `0` which is the default for `first_column`.
+unbinds the action. Digits 1 to 9 are reserved for count prefixes and are
+rejected in bindings; `0` may be bound and is the default for `first_column`.
+Keys that are bound to nothing do nothing: tview's own table bindings are
+never reached, so unbinding `cancel` simply disables Escape.
 
 Key spellings: a single character such as `h`, `G` or `$`; a name from `esc`,
     `enter`, `tab`, `space`, `left`, `right`, `up`, `down`, `home`, `end`,
@@ -464,7 +469,8 @@ Validation: a key bound to two actions, or a chord that is a prefix of
     another, is rejected at startup with a message naming both actions
 Actions: `move_left`, `move_right`, `move_down`, `move_up`, `next_column`,
     `prev_column`, `first_row`, `last_row`, `first_column`, `last_column`,
-    `half_page_down`, `half_page_up`, `search`, `next_match`, `prev_match`,
+    `half_page_down`, `half_page_up`, `page_down`, `page_up`, `search`,
+    `next_match`, `prev_match`,
     `cancel`, `filter`, `remove_filter`, `sort_asc`, `sort_desc`,
     `toggle_type`, `yank`, `yank_row`, `visual`, `visual_row`,
     `visual_swap`, `toggle_width`, `stats`, `help`, `quit`
