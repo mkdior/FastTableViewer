@@ -10,6 +10,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// version is the release version; overridden at build time with -ldflags "-X main.version=..."
+var version = "0.8.1"
+
 // setupFreezeMode configures row and column freeze settings based on header mode
 func setupFreezeMode(b *Buffer) {
 	switch args.Header {
@@ -166,7 +169,7 @@ func main() {
 	args.setDefault()
 	RootCmd := &cobra.Command{
 		Use:     "ftv {File_Name}",
-		Version: "0.8.1",
+		Version: version,
 		Short:   "Fast table viewer for delimited file in terminal",
 		Run: func(cmd *cobra.Command, cmdargs []string) {
 			if args.Sep == "\\t" {
