@@ -87,6 +87,9 @@ func TestCellPreviewShowsFullValueForTruncatedCell(t *testing.T) {
 	bufferTable.Focus(func(tview.Primitive) {})
 	mainPage = tview.NewFrame(bufferTable)
 	mainView = newCellPreview(mainPage)
+	oldPos := previewPos
+	defer func() { previewPos = oldPos }()
+	previewPos = previewBottom // keep the box off the selected cell so its ellipsis stays visible
 
 	screen := tcell.NewSimulationScreen("UTF-8")
 	if err := screen.Init(); err != nil {
@@ -117,6 +120,111 @@ func TestCellPreviewShowsFullValueForTruncatedCell(t *testing.T) {
 	screen.Show()
 	if out := screenText(screen); strings.Contains(out, "until dusk") {
 		t.Errorf("preview must disappear on a cell that is not cut:\n%s", out)
+	}
+}
+
+// rowOf returns the screen row (0-based) whose text contains needle, or -1.
+func rowOf(out, needle string) int {
+	for i, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, needle) {
+			return i
+		}
+	}
+	return -1
+}
+
+// colOf returns the screen column where needle starts in line, or -1. Box
+// borders are multi-byte runes, so byte offsets would be wrong.
+func colOf(line, needle string) int {
+	i := strings.Index(line, needle)
+	if i < 0 {
+		return -1
+	}
+	return displayWidth(line[:i])
+}
+
+func TestCellPreviewPositions(t *testing.T) {
+	long := "The quick brown fox jumps over the lazy dog again and again until dusk"
+	data := [][]string{{"id", "text", "more"}}
+	for i := 1; i <= 12; i++ {
+		data = append(data, []string{I2S(i), long, "x"})
+	}
+	buf, err := createNewBufferWithData(data, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	buf.rowFreeze = 1
+	oldB, oldWrapped, oldTable, oldPage, oldView, oldPos := b, wrappedColumns, bufferTable, mainPage, mainView, previewPos
+	defer func() {
+		b, wrappedColumns, bufferTable, mainPage, mainView, previewPos = oldB, oldWrapped, oldTable, oldPage, oldView, oldPos
+	}()
+	b = buf
+	wrappedColumns = map[int]int{1: 20}
+	setSearchResults(nil)
+	searchQuery = ""
+
+	bufferTable = tview.NewTable().SetSelectable(true, true).SetFixed(1, 1)
+	drawBuffer(b, bufferTable)
+	bufferTable.Focus(func(tview.Primitive) {})
+	mainPage = tview.NewFrame(bufferTable)
+	mainView = newCellPreview(mainPage)
+	screen := tcell.NewSimulationScreen("UTF-8")
+	if err := screen.Init(); err != nil {
+		t.Fatal(err)
+	}
+	const width, height = 100, 16
+	screen.SetSize(width, height)
+	mainView.SetRect(0, 0, width, height)
+
+	draw := func(row int) string {
+		screen.Clear()
+		bufferTable.Select(row, 1)
+		updateCellPreview(row, 1)
+		mainView.Draw(screen)
+		screen.Show()
+		return screenText(screen)
+	}
+	firstLine := "The quick brown fox" // the wrapped value starts like this
+
+	// cursor: the value's first line sits on the selected cell's own row and column
+	previewPos = previewAtCursor
+	out := draw(3)
+	cell := currentContent.drawnCell(3, 1)
+	cx, cy, cw := cell.GetLastPosition()
+	if cw == 0 {
+		t.Fatal("selected cell position was not recorded during the draw")
+	}
+	if got := rowOf(out, firstLine); got != cy {
+		t.Errorf("cursor mode: value starts on screen row %d, want the cell's row %d\n%s", got, cy, out)
+	}
+	if line := strings.Split(out, "\n")[cy]; colOf(line, firstLine) != cx {
+		t.Errorf("cursor mode: value starts at column %d, want the cell's column %d", colOf(line, firstLine), cx)
+	}
+
+	// cursor near the bottom: the box grows upwards and its last line sits on the cell's row
+	out = draw(12)
+	_, cy, _ = currentContent.drawnCell(12, 1).GetLastPosition()
+	if got := rowOf(out, "until dusk"); got != cy {
+		t.Errorf("cursor mode at the bottom: last line on row %d, want the cell's row %d\n%s", got, cy, out)
+	}
+
+	// top: box starts right under the header, whatever the cursor row
+	previewPos = previewTop
+	out = draw(12)
+	_, ty, _, th := bufferTable.GetInnerRect()
+	if got, want := rowOf(out, firstLine), ty+b.rowFreeze+1; got != want { // header, then the box border, then the value
+		t.Errorf("top mode: value on row %d, want %d\n%s", got, want, out)
+	}
+
+	// bottom: box ends at the bottom of the table area
+	previewPos = previewBottom
+	out = draw(3)
+	if got := rowOf(out, "until dusk"); got != ty+th-2 { // last text line above the bottom border
+		t.Errorf("bottom mode: last line on row %d, want %d\n%s", got, ty+th-2, out)
+	}
+
+	if _, err := parsePreviewPosition("sideways"); err == nil {
+		t.Error("unknown positions must be rejected")
 	}
 }
 

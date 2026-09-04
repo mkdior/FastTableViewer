@@ -418,10 +418,13 @@ Columns whose cells exceed 50 characters in the first 100 rows are limited to
 on any column to toggle its limit. Cells are never wrapped onto several lines.
 
 While the cursor is on a cut cell, a floating box shows the full value,
-word-wrapped and titled with the column name. It sits in the half of the
-table that does not hold the cursor and disappears when you move on. Values
-longer than 1000 characters, or too tall to fit in half the table, are not
-previewed.
+word-wrapped and titled with the column name, and disappears when you move
+on. By default it is laid over the selected cell so the value pops out in
+place: its first line starts where the cell's text starts, or its last line
+does when there is no room below. `position` in the `[preview]` section of
+the config file moves it: `cursor` (default), `top` (centred under the
+header) or `bottom` (centred at the bottom of the table). Values longer than
+1000 characters, or too tall to fit in half the table, are not previewed.
 
 ## Advanced Examples
 
@@ -497,6 +500,17 @@ Roles: `background`, `text`, `dim`, `panel`, `stripe`, `border`, `accent`,
 name       = "subcore"
 accent     = "colour208"
 alert      = "#ff5f5f"
+```
+
+### [preview]
+
+position: `cursor` (default) lays the full-value box over the selected cell;
+    `top` and `bottom` centre it under the header or at the bottom of the
+    table
+
+```toml
+[preview]
+position = "bottom"
 ```
 
 ### [clipboard]

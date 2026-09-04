@@ -26,6 +26,12 @@ type Config struct {
 	Keys      map[string]keyList `toml:"keys"`
 	Theme     map[string]string  `toml:"theme"`
 	Clipboard ClipboardConfig    `toml:"clipboard"`
+	Preview   PreviewConfig      `toml:"preview"`
+}
+
+// PreviewConfig controls the full-value box shown for cut cells.
+type PreviewConfig struct {
+	Position string `toml:"position"` // cursor (default), top or bottom
 }
 
 // ClipboardConfig overrides how yanked text reaches the clipboard.
@@ -144,6 +150,11 @@ func applyConfig(cfg Config, themeFlag string) error {
 	keys = km
 	clipboardOverride = strings.TrimSpace(cfg.Clipboard.Command)
 	clipboardOSC52 = cfg.Clipboard.OSC52 == nil || *cfg.Clipboard.OSC52
+	pos, err := parsePreviewPosition(cfg.Preview.Position)
+	if err != nil {
+		return fmt.Errorf("config: preview: %w", err)
+	}
+	previewPos = pos
 	return nil
 }
 
@@ -218,6 +229,11 @@ func dumpConfig(w io.Writer) error {
 	sb.WriteString("[clipboard]\n")
 	sb.WriteString("command = \"\"\n")
 	sb.WriteString("osc52   = true\n")
+	sb.WriteString("\n# Preview: where the box with the full value of a cut cell appears: \"cursor\" lays\n")
+	sb.WriteString("# it over the selected cell, \"top\" and \"bottom\" centre it under the header or at\n")
+	sb.WriteString("# the bottom of the table.\n\n")
+	sb.WriteString("[preview]\n")
+	sb.WriteString("position = \"cursor\"\n")
 	_, err := io.WriteString(w, sb.String())
 	return err
 }

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"strings"
 	"unicode/utf8"
 
@@ -17,14 +18,39 @@ const (
 	previewMaxWidth = 100
 )
 
+// previewPosition says where the full-value box is drawn.
+type previewPosition int
+
+const (
+	previewAtCursor previewPosition = iota // over the selected cell, so the value pops out in place
+	previewTop                             // under the header, centred
+	previewBottom                          // at the bottom of the table, centred
+)
+
+// previewPos is the active placement; the [preview] config section sets it.
+var previewPos = previewAtCursor
+
+// parsePreviewPosition reads the config spelling of a placement.
+func parsePreviewPosition(s string) (previewPosition, error) {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "", "cursor":
+		return previewAtCursor, nil
+	case "top":
+		return previewTop, nil
+	case "bottom":
+		return previewBottom, nil
+	}
+	return 0, fmt.Errorf("unknown preview position %q; use cursor, top or bottom", s)
+}
+
 // cellPreview is the main page (the table with its footer) plus a floating
 // box that shows the full value of the selected cell whenever that cell was
 // cut with an ellipsis by a column width limit.
 type cellPreview struct {
 	*tview.Frame
-	box  *tview.TextView
-	text string // full value to show; "" hides the box
-	row  int    // selected row, decides whether the box goes above or below it
+	box      *tview.TextView
+	text     string // full value to show; "" hides the box
+	row, col int    // the selected cell the box belongs to
 }
 
 // newCellPreview wraps the main page frame.
@@ -37,17 +63,19 @@ func newCellPreview(frame *tview.Frame) *cellPreview {
 }
 
 // show displays text in the box; an empty text hides it.
-func (p *cellPreview) show(title, text string, row int) {
-	p.text, p.row = text, row
+func (p *cellPreview) show(title, text string, row, col int) {
+	p.text, p.row, p.col = text, row, col
 	p.box.SetTitle(" " + title + " ")
 }
 
 // hide removes the box.
 func (p *cellPreview) hide() { p.text = "" }
 
-// Draw renders the page and then the box, placed in the half of the table
-// that does not hold the selected row so the cursor stays visible.
+// Draw renders the page and then the box at the configured position.
 func (p *cellPreview) Draw(screen tcell.Screen) {
+	if currentContent != nil {
+		currentContent.beginFrame()
+	}
 	p.Frame.Draw(screen)
 	if p.text == "" || !bufferTable.HasFocus() {
 		return
@@ -58,15 +86,45 @@ func (p *cellPreview) Draw(screen tcell.Screen) {
 		return
 	}
 	p.box.SetText(strings.Join(lines, "\n"))
-
-	rowOffset, _ := bufferTable.GetOffset()
-	screenRow := ty + p.row - rowOffset
-	y := ty + th - h // below the cursor
-	if screenRow >= ty+th/2 {
-		y = ty + b.rowFreeze // above it, under the frozen header
-	}
-	p.box.SetRect(tx+(tw-w)/2, y, w, h)
+	x, y := p.origin(w, h, tx, ty, tw, th)
+	p.box.SetRect(x, y, w, h)
 	p.box.Draw(screen)
+}
+
+// origin returns the top-left corner of a w x h box inside the table area.
+// At the cursor the box is laid over the selected cell so that its first text
+// line starts where the cell's text starts, or its last line when there is no
+// room below; if the cell is off screen the box falls back to the half of the
+// table away from the cursor.
+func (p *cellPreview) origin(w, h, tx, ty, tw, th int) (int, int) {
+	centred := tx + (tw-w)/2
+	switch previewPos {
+	case previewTop:
+		return centred, ty + b.rowFreeze
+	case previewBottom:
+		return centred, ty + th - h
+	}
+
+	cx, cy, cw := 0, 0, 0
+	if currentContent != nil {
+		if cell := currentContent.drawnCell(p.row, p.col); cell != nil {
+			cx, cy, cw = cell.GetLastPosition()
+		}
+	}
+	if cw == 0 {
+		rowOffset, _ := bufferTable.GetOffset()
+		if ty+p.row-rowOffset >= ty+th/2 {
+			return centred, ty + b.rowFreeze
+		}
+		return centred, ty + th - h
+	}
+
+	x := clampInt(cx-2, tx, tx+tw-w) // border and padding sit left of the value
+	y := cy - 1                      // first text line on the cell's row
+	if y+h > ty+th {
+		y = cy - h + 2 // last text line on the cell's row
+	}
+	return x, clampInt(y, ty, ty+th-h)
 }
 
 // previewLayout wraps text for a box inside a table area of availW x availH
@@ -133,7 +191,7 @@ func updateCellPreview(row, col int) {
 		return
 	}
 	if text, ok := truncatedCellText(row, col); ok {
-		mainView.show(columnTitle(col), text, row)
+		mainView.show(columnTitle(col), text, row, col)
 	} else {
 		mainView.hide()
 	}
