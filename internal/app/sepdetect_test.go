@@ -9,7 +9,7 @@ import (
 // ========================================
 
 func TestSepDetect_Comma(t *testing.T) {
-	sd := sepDetecor{}
+	sd := sepDetector{}
 	lines := []string{
 		"Name,Age,City",
 		"Alice,30,NYC",
@@ -23,7 +23,7 @@ func TestSepDetect_Comma(t *testing.T) {
 }
 
 func TestSepDetect_Tab(t *testing.T) {
-	sd := sepDetecor{}
+	sd := sepDetector{}
 	lines := []string{
 		"Name\tAge\tCity",
 		"Alice\t30\tNYC",
@@ -37,7 +37,7 @@ func TestSepDetect_Tab(t *testing.T) {
 }
 
 func TestSepDetect_Pipe(t *testing.T) {
-	sd := sepDetecor{}
+	sd := sepDetector{}
 	lines := []string{
 		"Name|Age|City",
 		"Alice|30|NYC",
@@ -51,7 +51,7 @@ func TestSepDetect_Pipe(t *testing.T) {
 }
 
 func TestSepDetect_Semicolon(t *testing.T) {
-	sd := sepDetecor{}
+	sd := sepDetector{}
 	lines := []string{
 		"Product;Price;Quantity",
 		"Apple;1.50;10",
@@ -65,7 +65,7 @@ func TestSepDetect_Semicolon(t *testing.T) {
 }
 
 func TestSepDetect_EmptyInput(t *testing.T) {
-	sd := sepDetecor{}
+	sd := sepDetector{}
 	lines := []string{}
 
 	sep := sd.sepDetect(lines)
@@ -75,7 +75,7 @@ func TestSepDetect_EmptyInput(t *testing.T) {
 }
 
 func TestSepDetect_InconsistentSeparators(t *testing.T) {
-	sd := sepDetecor{}
+	sd := sepDetector{}
 	lines := []string{
 		"Name,Age,City",
 		"Alice|30|NYC",
@@ -91,7 +91,7 @@ func TestSepDetect_InconsistentSeparators(t *testing.T) {
 }
 
 func TestIsValidSeparator(t *testing.T) {
-	sd := sepDetecor{}
+	sd := sepDetector{}
 
 	tests := []struct {
 		name     string
@@ -160,7 +160,7 @@ func TestCountRuneFast(t *testing.T) {
 }
 
 func TestGetCandidates(t *testing.T) {
-	sd := sepDetecor{}
+	sd := sepDetector{}
 
 	line := "Name,Age|City;Country"
 	candidates := sd.getCandidates(line)
@@ -184,7 +184,7 @@ func TestGetCandidates(t *testing.T) {
 }
 
 func TestScoreSeparator(t *testing.T) {
-	sd := sepDetecor{}
+	sd := sepDetector{}
 
 	tests := []struct {
 		name  string
@@ -261,7 +261,7 @@ func TestAllIntItemEqual(t *testing.T) {
 // ========================================
 
 func BenchmarkSepDetect_Comma(b *testing.B) {
-	sd := sepDetecor{}
+	sd := sepDetector{}
 	lines := []string{
 		"Name,Age,City,Country,Score",
 		"Alice,30,NYC,USA,95",
@@ -285,7 +285,7 @@ func BenchmarkCountRuneFast(b *testing.B) {
 }
 
 func TestSepDetect_RaggedRowsUseMajority(t *testing.T) {
-	sd := sepDetecor{}
+	sd := sepDetector{}
 	lines := []string{
 		"A,B,C,D",
 		"1,2,3,4",

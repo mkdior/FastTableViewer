@@ -121,7 +121,7 @@ func detectSeparator(name string, lines []string) rune {
 		hint = '\t'
 	}
 
-	sd := sepDetecor{}
+	sd := sepDetector{}
 	if hint != 0 && sd.isValidSeparator(lines, hint) {
 		return hint
 	}

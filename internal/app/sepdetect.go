@@ -5,7 +5,7 @@ import (
 	"unicode"
 )
 
-type sepDetecor struct {
+type sepDetector struct {
 }
 
 // Fast separator detection algorithm with improved heuristics
@@ -15,7 +15,7 @@ type sepDetecor struct {
 // 3. Optimized character counting
 // 4. Better validation logic
 
-func (sd *sepDetecor) sepDetect(s []string) rune {
+func (sd *sepDetector) sepDetect(s []string) rune {
 	if len(s) < 1 {
 		return 0
 	}
@@ -45,7 +45,7 @@ const majorityShare = 0.6
 // detectMajoritySeparator picks, among candidates present on every line, the
 // one whose modal field count covers the largest share of lines (>= majorityShare).
 // Earlier candidates win ties.
-func (sd *sepDetecor) detectMajoritySeparator(lines []string, candidates []rune) rune {
+func (sd *sepDetector) detectMajoritySeparator(lines []string, candidates []rune) rune {
 	var best rune
 	bestShare := 0.0
 	for _, sep := range candidates {
@@ -77,7 +77,7 @@ func (sd *sepDetecor) detectMajoritySeparator(lines []string, candidates []rune)
 }
 
 // Fast validation: Check if a separator is valid for all lines
-func (sd *sepDetecor) isValidSeparator(lines []string, sep rune) bool {
+func (sd *sepDetector) isValidSeparator(lines []string, sep rune) bool {
 	if len(lines) == 0 {
 		return false
 	}
@@ -110,7 +110,7 @@ func countRuneFast(s string, r rune) int {
 }
 
 // Analyze all potential separators when common ones don't work
-func (sd *sepDetecor) detectBestSeparator(lines []string) rune {
+func (sd *sepDetector) detectBestSeparator(lines []string) rune {
 	if len(lines) == 0 {
 		return 0
 	}
@@ -181,7 +181,7 @@ func (sd *sepDetecor) detectBestSeparator(lines []string) rune {
 }
 
 // Get candidate separators from first line
-func (sd *sepDetecor) getCandidates(line string) []rune {
+func (sd *sepDetector) getCandidates(line string) []rune {
 	// Use map for deduplication
 	seen := make(map[rune]bool)
 	var candidates []rune
@@ -212,7 +212,7 @@ func (sd *sepDetecor) getCandidates(line string) []rune {
 }
 
 // Score separator quality (higher is better)
-func (sd *sepDetecor) scoreSeparator(sep rune, count int) int {
+func (sd *sepDetector) scoreSeparator(sep rune, count int) int {
 	score := 0
 
 	// Prefer common separators
