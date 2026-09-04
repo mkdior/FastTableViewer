@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"bufio"
@@ -24,9 +24,9 @@ func Test_loadFileToBuffer(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{"Load TSV file", args{fn: "./data/test/test.tsv", b: createNewBuffer()}, false},
-		{"Load CSV file", args{fn: "./data/test/test.csv", b: createNewBuffer()}, false},
-		{"Load gzip file", args{fn: "./data/test/test.csv.gz", b: createNewBuffer()}, false},
+		{"Load TSV file", args{fn: "testdata/test.tsv", b: createNewBuffer()}, false},
+		{"Load CSV file", args{fn: "testdata/test.csv", b: createNewBuffer()}, false},
+		{"Load gzip file", args{fn: "testdata/test.csv.gz", b: createNewBuffer()}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -39,7 +39,7 @@ func Test_loadFileToBuffer(t *testing.T) {
 
 func TestLoadFileToBuffer_LargeFile(t *testing.T) {
 	b := createNewBuffer()
-	err := loadFileToBuffer("./data/test/large_sample.csv", b)
+	err := loadFileToBuffer("testdata/large_sample.csv", b)
 	if err != nil {
 		t.Skipf("Test file not found: %v", err)
 		return
@@ -56,7 +56,7 @@ func TestLoadFileToBuffer_LargeFile(t *testing.T) {
 
 func TestLoadFileToBuffer_NumericData(t *testing.T) {
 	b := createNewBuffer()
-	err := loadFileToBuffer("./data/test/numeric_data.csv", b)
+	err := loadFileToBuffer("testdata/numeric_data.csv", b)
 	if err != nil {
 		t.Skipf("Test file not found: %v", err)
 		return
@@ -71,7 +71,7 @@ func TestLoadFileToBuffer_NumericData(t *testing.T) {
 
 func TestLoadFileToBuffer_SpecialChars(t *testing.T) {
 	b := createNewBuffer()
-	err := loadFileToBuffer("./data/test/special_characters.csv", b)
+	err := loadFileToBuffer("testdata/special_characters.csv", b)
 	if err != nil {
 		t.Skipf("Test file not found: %v", err)
 		return
@@ -84,7 +84,7 @@ func TestLoadFileToBuffer_SpecialChars(t *testing.T) {
 
 func TestLoadFileToBuffer_Compressed(t *testing.T) {
 	b := createNewBuffer()
-	err := loadFileToBuffer("./data/test/compressed_data.csv.gz", b)
+	err := loadFileToBuffer("testdata/compressed_data.csv.gz", b)
 	if err != nil {
 		t.Skipf("Compressed test file not found: %v", err)
 		return
@@ -97,7 +97,7 @@ func TestLoadFileToBuffer_Compressed(t *testing.T) {
 
 func TestLoadFileToBuffer_TSV(t *testing.T) {
 	b := createNewBuffer()
-	err := loadFileToBuffer("./data/test/tab_separated.tsv", b)
+	err := loadFileToBuffer("testdata/tab_separated.tsv", b)
 	if err != nil {
 		t.Skipf("TSV test file not found: %v", err)
 		return
@@ -111,7 +111,7 @@ func TestLoadFileToBuffer_TSV(t *testing.T) {
 func TestLoadFileToBuffer_EdgeCases(t *testing.T) {
 	t.Run("Empty file", func(t *testing.T) {
 		b := createNewBuffer()
-		err := loadFileToBuffer("./data/test/empty_file.csv", b)
+		err := loadFileToBuffer("testdata/empty_file.csv", b)
 		if err != nil {
 			t.Skipf("Empty test file not found: %v", err)
 			return
@@ -124,7 +124,7 @@ func TestLoadFileToBuffer_EdgeCases(t *testing.T) {
 
 	t.Run("Single row", func(t *testing.T) {
 		b := createNewBuffer()
-		err := loadFileToBuffer("./data/test/single_row_data.csv", b)
+		err := loadFileToBuffer("testdata/single_row_data.csv", b)
 		if err != nil {
 			t.Skipf("Single row test file not found: %v", err)
 			return
@@ -137,7 +137,7 @@ func TestLoadFileToBuffer_EdgeCases(t *testing.T) {
 
 	t.Run("Non-existent file", func(t *testing.T) {
 		b := createNewBuffer()
-		err := loadFileToBuffer("./nonexistent_file_xyz.csv", b)
+		err := loadFileToBuffer("testdata/nonexistent_file_xyz.csv", b)
 		if err == nil {
 			t.Error("Expected error for non-existent file")
 		}
@@ -209,7 +209,7 @@ func TestLoadFileToBufferAsync(t *testing.T) {
 	updateChan := make(chan bool, 10)
 	doneChan := make(chan error, 1)
 
-	go loadFileToBufferAsync("./data/test/large_sample.csv", b, updateChan, doneChan)
+	go loadFileToBufferAsync("testdata/large_sample.csv", b, updateChan, doneChan)
 
 	select {
 	case <-updateChan:
@@ -477,7 +477,7 @@ func TestConcurrentCSVParsing(t *testing.T) {
 func TestIntegration_FullWorkflow(t *testing.T) {
 	buf := createNewBuffer()
 
-	err := loadFileToBuffer("./data/test/numeric_data.csv", buf)
+	err := loadFileToBuffer("testdata/numeric_data.csv", buf)
 	if err != nil {
 		t.Skipf("Integration test skipped: %v", err)
 		return
@@ -511,7 +511,7 @@ func TestLoadFileToBuffer_SkipLinesWithSeparatorGiven(t *testing.T) {
 
 	b := createNewBuffer()
 	b.sep = ','
-	if err := loadFileToBuffer("./data/test/test.csv", b); err != nil {
+	if err := loadFileToBuffer("testdata/test.csv", b); err != nil {
 		t.Fatalf("loadFileToBuffer() error = %v", err)
 	}
 	// test.csv has a header and three data rows; skipping one line drops the header.
@@ -568,7 +568,7 @@ func TestLoadFileToBufferAsync_SeparatorGivenSignalsWithRows(t *testing.T) {
 	b.sep = '|'
 	updateChan := make(chan bool, 10)
 	doneChan := make(chan error, 1)
-	go loadFileToBufferAsync("./data/test/pipe_delimited.txt", b, updateChan, doneChan)
+	go loadFileToBufferAsync("testdata/pipe_delimited.txt", b, updateChan, doneChan)
 
 	select {
 	case <-updateChan:
@@ -623,7 +623,7 @@ func TestLoadFileToBuffer_ColumnsOnRaggedRows(t *testing.T) {
 	defer args.setDefault()
 
 	b := createNewBuffer()
-	if err := loadFileToBuffer("./data/test/inconsistent_columns.csv", b); err != nil {
+	if err := loadFileToBuffer("testdata/inconsistent_columns.csv", b); err != nil {
 		t.Fatalf("a short row must not abort --columns loading: %v", err)
 	}
 	if b.colLen != 2 {

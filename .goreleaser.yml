@@ -9,6 +9,7 @@ before:
 
 builds:
   - binary: ftv
+    main: ./cmd/ftv
     env:
       - CGO_ENABLED=0
     goos:

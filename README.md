@@ -116,11 +116,8 @@ sudo rpm -i ftv-*.rpm       # Fedora/CentOS/RHEL
 ### Go install
 
 ```bash
-go install github.com/mkdior/FastTableViewer@latest
+go install github.com/mkdior/FastTableViewer/cmd/ftv@latest
 ```
-
-The installed binary is named `FastTableViewer`; rename or alias it to `ftv`
-if you prefer the short name.
 
 ### Build from source
 
@@ -398,6 +395,14 @@ make snapshot  # local goreleaser dry run (goreleaser must be installed)
 
 Releases are built by GoReleaser from the GitHub Actions `release` workflow
 whenever a `v*` tag is pushed.
+
+### Layout
+
+cmd/ftv: the executable; holds the build version and calls the app
+internal/app: the application: loaders, the table model with filters and
+    sorting, statistics and the tview user interface
+internal/app/testdata: fixture files used by the tests
+assets: icon files
 
 ## Credits
 

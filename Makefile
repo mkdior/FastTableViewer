@@ -10,7 +10,7 @@ all: build
 ## build: Build the binary
 build:
 	@echo "Building $(BINARY_NAME)..."
-	@go build $(LDFLAGS) -o $(BINARY_NAME)
+	@go build $(LDFLAGS) -o $(BINARY_NAME) ./cmd/ftv
 
 ## clean: Remove build artifacts
 clean:
@@ -66,10 +66,10 @@ deps:
 ## check: Run tests and linters
 check: test lint
 
-## version: Update the fallback version in ftv.go (usage: make version VERSION=x.y.z)
+## version: Update the fallback version in cmd/ftv/main.go (usage: make version VERSION=x.y.z)
 version:
 	@echo "Updating version to $(VERSION)..."
-	@sed -i.bak 's/^var version = ".*"/var version = "$(VERSION)"/' ftv.go && rm -f ftv.go.bak
+	@sed -i.bak 's/^var version = ".*"/var version = "$(VERSION)"/' cmd/ftv/main.go && rm -f cmd/ftv/main.go.bak
 
 ## help: Show this help message
 help:

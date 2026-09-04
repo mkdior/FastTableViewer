@@ -1,4 +1,4 @@
-package main
+package app
 
 // Args struct
 type Args struct {

@@ -1,4 +1,6 @@
-package main
+// Package app implements the ftv terminal table viewer: loading, the table
+// model with filters and sorting, statistics and the tview user interface.
+package app
 
 import (
 	"errors"
@@ -9,9 +11,6 @@ import (
 
 	"github.com/spf13/cobra"
 )
-
-// version is the release version; overridden at build time with -ldflags "-X main.version=..."
-var version = "0.9.0"
 
 // setupFreezeMode configures row and column freeze settings based on header mode
 func setupFreezeMode(b *Buffer) {
@@ -164,7 +163,9 @@ func loadAndDisplaySync(loader func(*Buffer) error, source string) error {
 	return runApp()
 }
 
-func main() {
+// Execute runs the ftv command line. version is the build version shown by
+// --version; the cmd/ftv entrypoint supplies it.
+func Execute(version string) {
 	initView()
 	args.setDefault()
 	RootCmd := &cobra.Command{
