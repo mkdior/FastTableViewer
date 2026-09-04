@@ -91,10 +91,13 @@ func countRuneFast(s string, r rune) int {
 	return count
 }
 
-// minSeparatorPresence is the share of sample lines a delimiter must appear
-// on. Ragged files (columns pasted onto some lines, a stray note line) keep
-// their delimiter on nearly every line even when the field counts differ.
-const minSeparatorPresence = 0.8
+// linesWithoutDelimiterAllowed is how many sample lines may lack the delimiter
+// altogether: one in a short sample, one more for every eight lines. Ragged
+// files (columns pasted onto some lines, a stray note line) keep their
+// delimiter on nearly every line even when the field counts differ.
+func linesWithoutDelimiterAllowed(n int) int {
+	return 1 + n/8
+}
 
 // detectBestSeparator scores every candidate that appears on nearly every
 // line. A delimiter produces many fields per line, so the average number of
@@ -129,7 +132,7 @@ func (sd *sepDetector) detectBestSeparator(lines []string) rune {
 				perCount[c]++
 			}
 		}
-		if float64(present)/n < minSeparatorPresence {
+		if present == 0 || present < len(lines)-linesWithoutDelimiterAllowed(len(lines)) {
 			continue
 		}
 		modal, modalCount := 0, 0

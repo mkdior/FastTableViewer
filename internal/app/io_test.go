@@ -677,6 +677,7 @@ func TestIssue25_SemicolonAndTabFilesLoad(t *testing.T) {
 		{"tab with pasted extra columns", ".tsv", "a\tb\n1\t2\t3\t4\n5\t6\n7\t8\t9\n", '\t', 0},
 		{"tab with pasted extra columns and no extension", "", "a\tb\n1\t2\t3\t4\n5\t6\n7\t8\t9\n", '\t', 0},
 		{"tab file with a line lacking tabs", ".txt", "a\tb\tc\nnote\n1\t2\t3\n4\t5\t6\n7\t8\t9\n", '\t', 0},
+		{"four-line tab file with a line lacking tabs", ".txt", "a\tb\tc\nnote\n1\t2\t3\n4\t5\t6\n", '\t', 0},
 		{"tab file with trailing tabs from pasting", ".txt", "a\tb\tc\t\n1\t2\t3\n4\t5\t6\t\t\n7\t8\t9\n", '\t', 0},
 		{"tab file with decimal commas", ".txt", "id\tval\tname\n1\t1,5\tx\n2\t2,5\ty\n3\t3,5\tz\n", '\t', 0},
 	}

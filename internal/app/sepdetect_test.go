@@ -293,6 +293,9 @@ func TestSepDetect_RaggedAndCompetingCandidates(t *testing.T) {
 	}{
 		{"ragged tabs, no two lines alike", []string{"a\tb", "1\t2\t3\t4", "5\t6", "7\t8\t9"}, '\t'},
 		{"one line without the delimiter", []string{"a\tb\tc", "note", "1\t2\t3", "4\t5\t6", "7\t8\t9"}, '\t'},
+		{"one line without the delimiter in a four-line sample", []string{"a\tb\tc", "note", "1\t2\t3", "4\t5\t6"}, '\t'},
+		{"two lines without the delimiter in a ten-line sample", []string{"a\tb", "x", "1\t2", "3\t4", "y", "5\t6", "7\t8", "9\t10", "11\t12", "13\t14"}, '\t'},
+		{"half the lines without the delimiter is not a delimiter", []string{"a\tb", "x", "1\t2", "y"}, 0},
 		{"trailing tabs from pasting", []string{"a\tb\tc\t", "1\t2\t3", "4\t5\t6\t\t", "7\t8\t9"}, '\t'},
 		{"decimal comma once per line loses to tabs", []string{"id\tval\tname", "1\t1,5\tx", "2\t2,5\ty", "3\t3,5\tz"}, '\t'},
 		{"quoted commas with a time column keep comma", []string{"t,msg", "12:00,\"a, b\"", "12:05,c", "12:10,d"}, ','},
