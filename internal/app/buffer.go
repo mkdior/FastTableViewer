@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/rivo/uniseg"
 )
 
 // stringInterner provides efficient string deduplication for categorical data
@@ -69,6 +71,7 @@ type Buffer struct {
 	sep          rune              // Column separator character
 	cont         [][]string        // Table content (rows x columns)
 	colType      []int             // Column data types (colTypeStr or colTypeFloat)
+	colWidth     []int             // Display width of the widest cell seen per column
 	rowLen       int               // Number of rows
 	colLen       int               // Number of columns
 	rowFreeze    int               // Number of frozen header rows (0 or 1)
@@ -98,6 +101,7 @@ func createNewBuffer() *Buffer {
 		sep:          0,
 		cont:         [][]string{},
 		colType:      []int{},
+		colWidth:     []int{},
 		rowLen:       0,
 		colLen:       0,
 		rowFreeze:    1,
@@ -157,6 +161,9 @@ func (b *Buffer) contAppendSli(s []string, strict bool) error {
 		b.resizeColUnsafe(len(s))
 	} else if len(s) < b.colLen {
 		b.padRowUnsafe(len(b.cont) - 1)
+	}
+	for i, cell := range s {
+		b.trackWidthUnsafe(i, cell)
 	}
 	b.rowLen++
 
@@ -263,8 +270,41 @@ func (b *Buffer) resizeColUnsafe(n int) {
 // padRowUnsafe appends "NaN" to row i until it is colLen wide (lock must be held)
 func (b *Buffer) padRowUnsafe(i int) {
 	for len(b.cont[i]) < b.colLen {
+		b.trackWidthUnsafe(len(b.cont[i]), "NaN")
 		b.cont[i] = append(b.cont[i], "NaN")
 	}
+}
+
+// trackWidthUnsafe records the display width of a cell so columns can be
+// drawn at a stable width instead of resizing as rows scroll into view.
+func (b *Buffer) trackWidthUnsafe(col int, cell string) {
+	for len(b.colWidth) <= col {
+		b.colWidth = append(b.colWidth, 0)
+	}
+	if w := displayWidth(cell); w > b.colWidth[col] {
+		b.colWidth[col] = w
+	}
+}
+
+// columnWidth returns the display width of the widest cell in column col.
+func (b *Buffer) columnWidth(col int) int {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	if col < 0 || col >= len(b.colWidth) {
+		return 0
+	}
+	return b.colWidth[col]
+}
+
+// displayWidth is the number of terminal cells s occupies. ASCII text is the
+// common case and needs no grapheme analysis.
+func displayWidth(s string) int {
+	for i := 0; i < len(s); i++ {
+		if s[i] >= 0x80 {
+			return uniseg.StringWidth(s)
+		}
+	}
+	return len(s)
 }
 
 // resizeCol adjusts the number of columns (thread-safe)
@@ -988,6 +1028,7 @@ func (b *Buffer) filterByColumn(colIndex int, options FilterOptions) *Buffer {
 	filtered.colFreeze = b.colFreeze
 	filtered.colType = make([]int, len(b.colType))
 	copy(filtered.colType, b.colType)
+	filtered.colWidth = append([]int(nil), b.colWidth...)
 
 	// Pre-allocate with estimated capacity (assume ~25% match rate)
 	estimatedCapacity := (b.rowLen - b.rowFreeze) / 4

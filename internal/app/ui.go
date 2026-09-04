@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -52,10 +53,27 @@ func setSearchResults(results []SearchResult) {
 
 // bufferContent adapts a Buffer to tview's TableContent so the table only
 // materialises the cells it actually draws. Header, frozen-column, filter and
-// search styling is applied per cell on demand.
+// search styling is applied per cell on demand. Cells are cached for the
+// duration of one frame: tview asks for each visible cell several times per
+// draw, and the cached object keeps the screen position tview records on it.
 type bufferContent struct {
 	tview.TableContentReadOnly
-	b *Buffer
+	b     *Buffer
+	cells map[[2]int]*tview.TableCell
+}
+
+// currentContent is the content the table is showing; cellPreview uses it to
+// find where the selected cell was drawn.
+var currentContent *bufferContent
+
+// beginFrame drops the cells cached during the previous draw.
+func (c *bufferContent) beginFrame() {
+	c.cells = make(map[[2]int]*tview.TableCell, len(c.cells))
+}
+
+// drawnCell returns the cell object drawn at row, col in the current frame.
+func (c *bufferContent) drawnCell(row, col int) *tview.TableCell {
+	return c.cells[[2]int{row, col}]
 }
 
 func (c *bufferContent) GetRowCount() int {
@@ -71,6 +89,19 @@ func (c *bufferContent) GetColumnCount() int {
 }
 
 func (c *bufferContent) GetCell(r, col int) *tview.TableCell {
+	if cell, ok := c.cells[[2]int{r, col}]; ok {
+		return cell
+	}
+	cell := c.buildCell(r, col)
+	if c.cells == nil {
+		c.cells = make(map[[2]int]*tview.TableCell)
+	}
+	c.cells[[2]int{r, col}] = cell
+	return cell
+}
+
+// buildCell creates the styled cell for row r, column col.
+func (c *bufferContent) buildCell(r, col int) *tview.TableCell {
 	b := c.b
 	b.mu.RLock()
 	if r < 0 || col < 0 || r >= b.rowLen || col >= b.colLen || col >= len(b.cont[r]) {
@@ -79,6 +110,10 @@ func (c *bufferContent) GetCell(r, col int) *tview.TableCell {
 	}
 	cellText := b.cont[r][col]
 	rowFreeze, colFreeze := b.rowFreeze, b.colFreeze
+	colWidth := 0
+	if col < len(b.colWidth) {
+		colWidth = b.colWidth[col]
+	}
 	b.mu.RUnlock()
 
 	color := theme.Text
@@ -140,7 +175,14 @@ func (c *bufferContent) GetCell(r, col int) *tview.TableCell {
 	if width, isLimited := wrappedColumns[col]; isLimited {
 		maxWidth = width
 		cellText = truncateText(cellText, maxWidth)
+		if colWidth > maxWidth {
+			colWidth = maxWidth
+		}
 	}
+
+	// Pad to the column's widest cell so the column keeps the same width
+	// whichever rows are on screen; headers are centred within it.
+	cellText = padToWidth(cellText, colWidth, isHeaderRow)
 
 	cell := tview.NewTableCell(cellText).
 		SetTextColor(color).
@@ -172,10 +214,25 @@ func clampRow(row int, b *Buffer) int {
 	return clampInt(row, firstDataRow(b), b.rowLen-1)
 }
 
+// padToWidth pads text with spaces to width display cells, centred for
+// headers and left-aligned otherwise. Wider text is returned unchanged.
+func padToWidth(text string, width int, center bool) string {
+	gap := width - displayWidth(text)
+	if gap <= 0 {
+		return text
+	}
+	if !center {
+		return text + strings.Repeat(" ", gap)
+	}
+	left := gap / 2
+	return strings.Repeat(" ", left) + text + strings.Repeat(" ", gap-left)
+}
+
 // drawBuffer points the table at b. Cells are produced lazily by bufferContent,
 // so this is cheap to call after every state change (load tick, sort, filter, search).
 func drawBuffer(b *Buffer, t *tview.Table) {
-	t.SetContent(&bufferContent{b: b})
+	currentContent = &bufferContent{b: b}
+	t.SetContent(currentContent)
 }
 
 // maxCountPrefix caps a typed count so further digits cannot overflow it.

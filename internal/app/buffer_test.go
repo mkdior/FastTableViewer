@@ -426,3 +426,31 @@ func TestBuffer_RaggedRowsAreExactlyColLenWide(t *testing.T) {
 		t.Errorf("missing cells must be NaN: %q", b.cont)
 	}
 }
+
+func TestBuffer_TracksColumnWidths(t *testing.T) {
+	b := createNewBuffer()
+	_ = b.contAppendSli([]string{"id", "name"}, false)
+	_ = b.contAppendSli([]string{"1", "a much longer name"}, false)
+	_ = b.contAppendSli([]string{"12345", "日本語"}, false) // 3 wide runes = 6 cells
+	_ = b.contAppendSli([]string{"7"}, false)            // short row is padded with NaN
+	if got := b.columnWidth(0); got != 5 {
+		t.Errorf("column 0 width = %d, want 5", got)
+	}
+	if got := b.columnWidth(1); got != len("a much longer name") {
+		t.Errorf("column 1 width = %d, want %d", got, len("a much longer name"))
+	}
+	_ = b.contAppendSli([]string{"8", "9", "extra column"}, false)
+	if got := b.columnWidth(2); got != len("extra column") {
+		t.Errorf("new column width = %d, want %d (NaN padding must not exceed it)", got, len("extra column"))
+	}
+	if got := b.columnWidth(9); got != 0 {
+		t.Errorf("unknown column width = %d, want 0", got)
+	}
+	filtered := b.filterByColumn(0, FilterOptions{Query: "1", Operator: "contains"})
+	if filtered.columnWidth(1) != b.columnWidth(1) {
+		t.Error("filtered buffers must keep the source column widths so columns do not jump when filtering")
+	}
+	if displayWidth("日本語") != 6 || displayWidth("abc") != 3 {
+		t.Error("displayWidth must count terminal cells")
+	}
+}

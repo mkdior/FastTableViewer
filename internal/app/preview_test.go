@@ -119,3 +119,30 @@ func TestCellPreviewShowsFullValueForTruncatedCell(t *testing.T) {
 		t.Errorf("preview must disappear on a cell that is not cut:\n%s", out)
 	}
 }
+
+func TestCellsArePaddedToColumnWidth(t *testing.T) {
+	data := [][]string{{"h", "name"}, {"1", "short"}, {"2", "a considerably longer value"}}
+	buf, _ := createNewBufferWithData(data, true)
+	buf.rowFreeze = 1
+	oldB, oldWrapped := b, wrappedColumns
+	defer func() { b, wrappedColumns = oldB, oldWrapped }()
+	b = buf
+	wrappedColumns = map[int]int{}
+	setSearchResults(nil)
+	c := &bufferContent{b: buf}
+	want := displayWidth("a considerably longer value")
+	if got := displayWidth(c.GetCell(1, 1).Text); got != want {
+		t.Errorf("short cell padded to %d cells, want the column width %d", got, want)
+	}
+	if got := c.GetCell(0, 1).Text; !strings.HasPrefix(got, " ") || !strings.HasSuffix(got, " ") || displayWidth(got) != want {
+		t.Errorf("header must be centred within the column width, got %q", got)
+	}
+	if c.GetCell(1, 1) != c.GetCell(1, 1) {
+		t.Error("cells must be cached within a frame")
+	}
+	c.beginFrame()
+	wrappedColumns = map[int]int{1: 10}
+	if got := displayWidth(c.GetCell(1, 1).Text); got != 10 {
+		t.Errorf("a width-limited column pads only to its limit, got %d", got)
+	}
+}
