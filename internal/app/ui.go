@@ -129,6 +129,12 @@ func (c *bufferContent) GetCell(r, col int) *tview.TableCell {
 		}
 	}
 
+	// Cells inside a visual selection (the cursor itself is drawn by tview)
+	if inVisual(r, col) {
+		backgroundColor = theme.Selection
+		color = theme.Text
+	}
+
 	// Width-limited columns are truncated with an ellipsis
 	maxWidth := 0
 	if width, isLimited := wrappedColumns[col]; isLimited {
@@ -363,6 +369,9 @@ func drawUI(b *Buffer) error {
 
 		cursorPosStr = buildCursorPosStr(row, column)
 		updateCellPreview(row, column)
+		if visual != visualOff {
+			statusMessage = visualStatus()
+		}
 
 		// Throttle footer updates to reduce unnecessary redraws
 		now := time.Now()

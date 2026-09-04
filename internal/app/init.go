@@ -105,6 +105,7 @@ func initView() {
 	lastGPress = time.Time{}                    // Initialize vim navigation state
 	pendingCount = 0
 	pendingChord = nil
+	visual = visualOff
 }
 
 // stop UI

@@ -54,8 +54,9 @@ controls.
   readable
 - **Statistics and plots**: per-column statistics with an ASCII histogram or
   frequency chart
-- **Vim keybindings**: h/j/k/l, gg/G, 0/$, Ctrl-d/Ctrl-u, with count
-  prefixes such as `5j` or `12G`
+- **Vim keybindings**: h/j/k/l, gg/G, 0/$, Ctrl-d/Ctrl-u, count prefixes
+  such as `5j` or `12G`, visual mode over cells, and `y`/`Y` to copy cells or
+  rows to the clipboard; every key is remappable in a config file
 - **Mouse support**: click to select, scroll to move, click buttons in dialogs
 - **Pipe support**: reads from stdin for use in shell pipelines
 
@@ -267,6 +268,9 @@ t: toggle the column type (String, Number, Date)
 W: toggle the width limit on the current column
 y: copy the current cell to the clipboard
 Y: copy the current row to the clipboard, cells separated by tabs
+v, Ctrl-v: visual mode; select a block of cells from here to the cursor
+V: visual line mode; select whole rows
+o: in visual mode, swap the anchor and the cursor
 i: statistics for the current column
 ?: help
 q: quit
@@ -381,6 +385,17 @@ tool when one is installed: `clip.exe` under WSL, `pbcopy` on macOS,
 `wl-copy` on Wayland, `xclip` or `xsel` on X11. The footer reports which
 channels were used. Yanks over 50MB are refused.
 
+### Visual mode
+
+Press `v` (or `Ctrl-v`) to anchor a selection at the current cell and move
+with the usual motions, counts included, to extend it into a rectangle of
+cells; the footer shows its size. `V` selects whole rows instead, and `v`/`V`
+switch between the two. `o` swaps the anchor and the cursor so the other end
+can be adjusted. `y` copies the selection as tab-separated text and leaves
+visual mode (`Y` copies the whole rows of a block selection), `Esc` or
+pressing the same key again cancels, and any other command leaves visual mode
+before running.
+
 ### Column width limits
 
 Columns whose cells exceed 50 characters in the first 100 rows are limited to
@@ -439,8 +454,8 @@ Actions: `move_left`, `move_right`, `move_down`, `move_up`, `next_column`,
     `prev_column`, `first_row`, `last_row`, `first_column`, `last_column`,
     `half_page_down`, `half_page_up`, `search`, `next_match`, `prev_match`,
     `cancel`, `filter`, `remove_filter`, `sort_asc`, `sort_desc`,
-    `toggle_type`, `yank`, `yank_row`, `toggle_width`, `stats`, `help`,
-    `quit`
+    `toggle_type`, `yank`, `yank_row`, `visual`, `visual_row`,
+    `visual_swap`, `toggle_width`, `stats`, `help`, `quit`
 
 ```toml
 [keys]

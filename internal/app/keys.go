@@ -56,6 +56,24 @@ func handleTableKey(event *tcell.EventKey) *tcell.EventKey {
 
 	rawCount, count := takeCount()
 	info, _ := actionByName(string(act))
+	if visual != visualOff {
+		switch act {
+		case actYank:
+			yankVisual(false)
+			return nil
+		case actYankRow:
+			yankVisual(true)
+			return nil
+		case actCancel:
+			exitVisual("All Done")
+			return nil
+		case actVisual, actVisualRow, actVisualSwap:
+		default:
+			if !info.motion {
+				exitVisual("All Done")
+			}
+		}
+	}
 	if info.motion {
 		userMovedCursor = true
 		if rawCount > 0 {
@@ -132,6 +150,12 @@ func runAction(act action, rawCount, count int) {
 		yankCells(row, col, row, col)
 	case actYankRow:
 		yankCells(row, 0, row, numCols-1)
+	case actVisual:
+		startVisual(visualBlock)
+	case actVisualRow:
+		startVisual(visualRows)
+	case actVisualSwap:
+		swapVisualAnchor()
 	case actStats:
 		showCurrentColumnStats()
 	case actHelp:
