@@ -5,7 +5,7 @@ import "github.com/mkdior/FastTableViewer/internal/app"
 
 // version is the release version; overridden at build time with
 // -ldflags "-X main.version=...".
-var version = "0.9.2"
+var version = "0.9.3"
 
 func main() {
 	app.Execute(version)
