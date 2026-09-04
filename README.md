@@ -1,20 +1,22 @@
-# Fast Table Viewer for Terminal
+# ftv: Fast Table Viewer for the terminal
 
 **A fast, feature-rich CSV/TSV/delimited file viewer for the command line**
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/codechenx/FastTableViewer)](https://goreportcard.com/report/github.com/codechenx/FastTableViewer)
-![test](https://github.com/codechenx/FastTableViewer/workflows/test/badge.svg)
-[![Coverage Status](https://coveralls.io/repos/github/codechenx/FastTableViewer/badge.svg?branch=main)](https://coveralls.io/github/codechenx/FastTableViewer?branch=main)
-[![GitHub license](https://img.shields.io/github/license/codechenx/FastTableViewer.svg)](https://github.com/codechenx/FastTableViewer/blob/master/LICENSE)
-[![GitHub release](https://img.shields.io/github/release/codechenx/FastTableViewer.svg)](http://GitHub.com/codechenx/FastTableViewer/releases)
-
+![test](https://github.com/mkdior/FastTableViewer/workflows/test/badge.svg)
+[![GitHub license](https://img.shields.io/github/license/mkdior/FastTableViewer.svg)](https://github.com/mkdior/FastTableViewer/blob/main/LICENSE)
+[![GitHub release](https://img.shields.io/github/release/mkdior/FastTableViewer.svg)](https://github.com/mkdior/FastTableViewer/releases)
 
 <p align="center">
    <img src="data/icon_transparent.png"  style="width:200px;" alt="ftv icon"/>
 </p>
 
+ftv was created by Xiuqiang (Stephen) Chen
+([@codechenx](https://github.com/codechenx)). This repository continues that
+work after the original project went unmaintained. See [Credits](#credits).
 
 ## Demo
+
+Recorded by the original author on an earlier version:
 
 [![asciicast](https://asciinema.org/a/C1MPA6TB5h68NYYJXogCigSr2.svg)](https://asciinema.org/a/C1MPA6TB5h68NYYJXogCigSr2)
 
@@ -22,576 +24,358 @@
 
 - [Features](#features)
 - [Installation](#installation)
-  - [Quick Install (Linux/macOS)](#quick-install-linuxmacos)
-  - [Package Managers](#package-managers)
-  - [Build from Source](#build-from-source)
 - [Quick Start](#quick-start)
 - [Command Line Flags](#command-line-flags)
 - [Key Bindings](#key-bindings)
 - [Features in Detail](#features-in-detail)
-  - [Progressive Loading](#progressive-loading)
-  - [Data Types and Sorting](#data-types-and-sorting)
-  - [Statistics and Visualization](#statistics-and-visualization)
-  - [Search](#search)
-  - [Column Filter](#column-filter)
-  - [Text Wrapping](#text-wrapping)
-- [Filter Operators Guide](FILTER_OPERATORS.md)
 - [Advanced Examples](#advanced-examples)
-  - [Biological Data Formats](#biological-data-formats)
+- [Large Files](#large-files)
+- [Development](#development)
+- [Credits](#credits)
+- [License](#license)
 
 ## Features
 
-ftv brings spreadsheet-like functionality to your terminal with vim-inspired controls.
+ftv brings spreadsheet-like functionality to your terminal with vim-inspired
+controls.
 
-- **Spreadsheet interface** - Navigate and view tabular data with frozen headers
-- **Smart parsing** - Automatically detects delimiters (CSV, TSV, custom separators)
-- **Progressive loading** - Start viewing large files immediately while they load
-- **Gzip support** - Read compressed files directly
-- **Powerful search** - Find text across all cells with highlighting and regex pattern matching support
-- **Advanced filtering** - Filter rows with complex regex queries
-- **Flexible sorting** - Sort by any column with intelligent type detection
-- **Text wrapping** - Wrap long cell content for better readability
-- **Statistics & plots** - View column statistics with visual distribution charts
-- **Vim keybindings** - Navigate naturally with h/j/k/l and more
-- **Mouse support** - Click to select cells, scroll with mouse wheel, interact with dialogs
-- **Pipe support** - Read from stdin for seamless integration with shell pipelines
-
+- **Spreadsheet interface**: navigate tabular data with frozen headers
+- **Smart parsing**: detects the delimiter (comma, tab, pipe, semicolon, or
+  anything consistent) and tolerates ragged rows
+- **Progressive loading**: the table appears immediately and fills in while a
+  large file streams in
+- **Gzip support**: reads compressed files directly
+- **Search**: plain text or regex, with highlighting and next/previous
+  navigation
+- **Filtering**: per-column filters with text, regex, numeric and date
+  operators, combined across columns
+- **Sorting**: by any column, with string, number and date ordering
+- **Column width limits**: cap wide columns so the rest of the table stays
+  readable
+- **Statistics and plots**: per-column statistics with an ASCII histogram or
+  frequency chart
+- **Vim keybindings**: h/j/k/l, gg/G, 0/$, Ctrl-d/Ctrl-u
+- **Mouse support**: click to select, scroll to move, click buttons in dialogs
+- **Pipe support**: reads from stdin for use in shell pipelines
 
 ## Installation
 
-### Recommended: Install Script (Linux/macOS)
+### Install script (Linux/macOS)
+
+Downloads the latest release for your platform into the current directory:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/codechenx/FastTableViewer/master/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/mkdior/FastTableViewer/main/install.sh | bash
 sudo mv ftv /usr/local/bin/
 ```
 
+### Pre-built binaries and packages
 
-### Package Managers
+Download from the
+[releases page](https://github.com/mkdior/FastTableViewer/releases):
 
-**macOS (homebrew)**
+- Archives (`ftv_<version>_<OS>_<arch>.tar.gz`, `.zip` on Windows) for Linux
+  (x86_64, arm64, armv7, i386), macOS (Intel, Apple Silicon) and Windows
+  (x86_64, i386)
+- `.deb` and `.rpm` packages for Linux x86_64 and arm64
 
 ```bash
-brew tap codechenx/tap
-brew install codechenx-ftv
+sudo dpkg -i ftv_*.deb      # Debian/Ubuntu
+sudo rpm -i ftv-*.rpm       # Fedora/CentOS/RHEL
 ```
 
-**Debian/Ubuntu (.deb)**
+### Go install
 
 ```bash
-# Download from releases page
-wget https://github.com/codechenx/FastTableViewer/releases/download/v0.8.1/FastTableViewer_0.8.1_linux_amd64.deb
-sudo dpkg -i FastTableViewer_*.deb
+go install github.com/mkdior/FastTableViewer@latest
 ```
 
-**CentOS/Fedora (.rpm)**
+The installed binary is named `FastTableViewer`; rename or alias it to `ftv`
+if you prefer the short name.
+
+### Build from source
+
+Requires Go 1.24 or later:
 
 ```bash
-# Download from releases page
-wget https://github.com/codechenx/FastTableViewer/releases/download/v0.8.1/FastTableViewer_0.8.1_linux_amd64.rpm
-sudo rpm -i FastTableViewer_*.rpm
-```
-
-**Arch Linux (AUR)**
-
-```bash
-yay -S ftv-bin
-```
-
-**Snap (Linux)**
-
-[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-white.svg)](https://snapcraft.io/codechenx-tv)
-
-```bash
-sudo snap install codechenx-tv
-sudo snap alias codechenx-tv ftv
-```
-
-**Go Install**
-
-```bash
-go install github.com/codechenx/FastTableViewer@latest
-```
-
-
-### Manual Download
-
-Download pre-built binaries from [releases](https://github.com/codechenx/FastTableViewer/releases) for:
-- Linux (x86_64, ARM, ARM64)
-- macOS (Intel, Apple Silicon)
-- Windows (x86_64, i386)
-
-### Build from Source
-
-Requires Go 1.21 or later:
-
-```bash
-git clone https://github.com/codechenx/FastTableViewer.git
+git clone https://github.com/mkdior/FastTableViewer.git
 cd FastTableViewer
-go build -ldflags="-s -w" -o ftv
+make build        # produces ./ftv with the version stamped from git
 ```
 
 ## Quick Start
 
-View a CSV file:
-
 ```bash
-ftv data.csv
-```
-
-View a TSV file (tab-separated):
-
-```bash
-ftv data.tsv
-```
-
-Read from stdin:
-
-```bash
-cat data.csv | ftv
-ps aux | ftv
-```
-
-Specify a custom delimiter:
-
-```bash
-ftv data.txt -s "|"
-```
-
-View only specific columns:
-
-```bash
-ftv data.csv --columns 1,3,5
-```
-
-Skip header lines (e.g., for VCF files):
-
-```bash
-ftv file.vcf --skip-prefix "##"
+ftv data.csv                       # view a CSV file
+ftv data.tsv                       # view a TSV file
+cat data.csv | ftv                 # read from stdin
+ps aux | ftv                       # any whitespace-delimited output
+ftv data.txt -s "|"                # custom delimiter
+ftv data.csv --columns 1,3,5       # only some columns
+ftv file.vcf --skip-prefix "##"    # skip metadata lines
 ```
 
 ## Command Line Flags
 
-**Syntax:** `ftv [FILE] [flags]`
+Syntax: `ftv [FILE] [flags]`
 
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--separator` | `-s` | Delimiter character (use `\t` for tab) |
-| `--lines` | `-n` | Display only first N lines |
-| `--skip-prefix` | | Skip lines starting with prefix (comma-separated) |
-| `--skip-lines` | | Skip first N lines |
-| `--columns` | | Show only specified columns (comma-separated) |
-| `--hide-columns` | | Hide specified columns (comma-separated) |
-| `--freeze` | `-f` | Freeze mode: `-1`=none, `0`=row+col, `1`=row only, `2`=col only |
-| `--strict` | | Strict mode: fail on missing/inconsistent data |
-| `--async` | | Progressive rendering while loading (default: `true`) |
-| `--memory` | `-m` | Memory limit in MB (`0`=unlimited, `>0`=set limit) |
-| `--help` | `-h` | Show help |
-| `--version` | `-v` | Show version |
+### --separator
 
-**Examples:**
+Short: `-s`
+Argument: delimiter character; use `\t` for tab
+Default: detected from the first lines, with `.csv` and `.tsv` suffixes as a
+    hint
 
-```bash
-# Use custom delimiter
-ftv data.txt -s ","
+### --lines
 
-# View only columns 1, 3, and 5
-ftv data.csv --columns 1,3,5
+Short: `-n`
+Argument: N
+Effect: load only the first N lines
 
-# Skip lines starting with "#"
-ftv data.txt --skip-prefix "#"
+### --skip-prefix
 
-# Disable header freezing
-ftv data.csv -f -1
+Argument: comma-separated list of prefixes
+Effect: skip lines starting with any of the prefixes
 
-# Disable async loading for slow systems
-ftv large.csv --async=false
+### --skip-lines
 
-# Set memory limit to 500 MB
-ftv large.csv --memory 500
-ftv large.csv -m 500
-```
+Argument: N
+Effect: skip the first N lines
+
+### --columns
+
+Argument: comma-separated 1-based column numbers
+Effect: show only these columns
+
+### --hide-columns
+
+Argument: comma-separated 1-based column numbers
+Effect: hide these columns (cannot be combined with `--columns`)
+
+### --freeze
+
+Short: `-f`
+Argument: `-1` none, `0` header row and first column, `1` header row only,
+    `2` first column only
+Default: `0`
+
+### --strict
+
+Effect: fail when a row has a different number of columns than the header
+
+### --async
+
+Default: `true`
+Effect: render progressively while loading; `--async=false` loads everything
+    first and prints progress to the terminal
+
+### --memory
+
+Short: `-m`
+Argument: limit in MB; `0` means unlimited
+Default: `0`
+Effect: stop loading when the estimated memory use reaches the limit; the rows
+    loaded so far stay viewable and the footer says why loading stopped
+
+### --help, --version
+
+Short: `-h`, `-v`
 
 ## Key Bindings
 
-ftv uses vim-inspired keybindings for intuitive navigation.
+### Movement
 
-### Navigation
-
-| Key | Action |
-|-----|--------|
-| `h` / `←` | Move left |
-| `l` / `→` | Move right |
-| `j` / `↓` | Move down |
-| `k` / `↑` | Move up |
-| `w` | Jump to next column |
-| `b` | Jump to previous column |
-| `gg` | Go to first row |
-| `G` | Go to last row |
-| `0` | Go to first column |
-| `$` | Go to last column |
-| `Ctrl-d` | Page down (half page) |
-| `Ctrl-u` | Page up (half page) |
+h, Left: move left
+l, Right: move right
+j, Down: move down
+k, Up: move up
+w: next column
+b: previous column
+gg: first row
+G: last row
+0: first column
+$: last column
+Ctrl-d: half a page down
+Ctrl-u: half a page up
 
 ### Operations
 
-| Key | Action |
-|-----|--------|
-| `/` | Search |
-| `n` | Next search result |
-| `N` | Previous search result |
-| `Esc` | Clear search highlighting / Close dialogs |
-| `f` | Filter by column |
-| `r` | Remove filter for current column |
-| `s` | Sort ascending |
-| `S` | Sort descending |
-| `t` | Toggle column type (String → Number → Date) |
-| `W` | Toggle text wrapping |
-| `i` | Show column statistics |
-| `?` | Show help |
-| `Esc` | Close dialogs / clear search |
-| `q` | Quit |
+/: search
+n: next search result
+N: previous search result
+Esc: clear search highlighting, or close the open dialog
+f: filter by the current column
+r: remove the filter on the current column
+s: sort ascending by the current column
+S: sort descending by the current column
+t: toggle the column type (String, Number, Date)
+W: toggle the width limit on the current column
+i: statistics for the current column
+?: help
+q: quit
 
-### Mouse Support
+### Mouse
 
-| Action | Behavior |
-|--------|----------|
-| **Left Click** | Select cell at click position |
-| **Scroll Wheel Up** | Scroll up one row |
-| **Scroll Wheel Down** | Scroll down one row |
-| **Click on Buttons** | Activate buttons in dialogs (Search, Filter, Stats) |
-| **Click on Checkboxes** | Toggle checkboxes in forms (e.g., "Use Regex") |
+Left click: select the cell under the pointer
+Scroll wheel: move the selection up or down one row
+Click on buttons and checkboxes: works in the search, filter and statistics
+    dialogs
 
-**Note:** Mouse support works in most modern terminals. If your terminal doesn't support mouse events, you can still use keyboard navigation exclusively.
+Mouse support depends on the terminal; keyboard navigation always works.
 
 ## Features in Detail
 
-### Progressive Loading
+### Progressive loading
 
-Start viewing large files instantly without waiting for them to fully load. The UI appears immediately and updates as data streams in.
+Large files appear instantly and fill in while they load. The footer shows a
+progress bar for files whose size is known, and a row counter for pipes and
+gzip input. Once loading finishes it shows the row count. Type detection runs
+after the load completes, so the column type in the footer may change once.
 
-```bash
-# Default behavior - UI appears instantly
-ftv huge_dataset.csv
+If loading stops early (memory limit, a line over 1MB, a parse error) the
+footer says so and the rows loaded so far remain fully usable.
 
-# Disable if you prefer traditional loading
-ftv huge_dataset.csv --async=false
-```
+### Data types and sorting
 
-**Progress indicators:**
-- Files show percentage: `Loading... 45.2%` → `Loaded 1,000,000 rows`
-- Pipes show row count: `Loading... 5,234 rows` → `Loaded 10,000 rows`
-- Updates at 50 FPS for smooth rendering
+ftv samples each column after loading and classifies it as String, Number or
+Date when at least 90% of the sampled non-empty cells fit. Press `t` to cycle
+the type by hand, then `s` or `S` to sort.
 
-**Memory limit:**
-Control memory usage when viewing very large files. By default, ftv has no memory limit and will continue loading data until your system runs out of memory. You can set a limit to prevent excessive memory consumption:
+Strings: byte-wise order
+Numbers: numeric order; integers, floats, scientific notation and thousands
+    separators (`1,234.5`, `1_234`) are accepted; cells that do not parse sort
+    as zero
+Dates: chronological; ISO-8601 (`2024-10-17`, with optional time and zone),
+    US (`10/17/2024`), EU (`17/10/2024`), `2024/10/17`, `2024.10.17`,
+    `Jan 02, 2006`, `January 02, 2006`, `02-Jan-2006` and `02 Jan 2006`
 
-```bash
-# Set memory limit to 500 MB
-ftv huge_dataset.csv --memory 500
+### Statistics and plots
 
-# Set memory limit to 1 GB (1024 MB)
-ftv huge_dataset.csv -m 1024
-```
+Press `i` on a column to open the statistics dialog.
 
-When the memory limit is reached, ftv will stop loading additional rows and display an error message indicating the limit. The data that was loaded before hitting the limit remains viewable and fully functional. This is useful for:
-- Previewing extremely large files without loading everything
-- Running on memory-constrained systems
-- Preventing out-of-memory crashes when exploring unknown files
+Numeric columns: count, min, max, range, sum, mean, median, mode, standard
+    deviation, variance, quartiles and IQR, plus a histogram
+String and date columns: total, unique and empty counts, the frequency of each
+    value with percentages, plus a bar chart of the 15 most frequent values
 
-### Data Types and Sorting
-
-tv automatically detects column types and provides intelligent sorting.
-
-**Type Detection:** When loading data, ftv analyzes each column to determine if it contains strings, numbers, or dates using a 90% confidence threshold.
-
-**Manual Type Toggle:** Press `t` to cycle through types for the current column:
-- String → Number → Date → String
-
-**Sorting Behavior:**
-- **Strings:** Alphabetical order
-- **Numbers:** Numeric order (supports integers, floats, scientific notation, thousands separators)
-- **Dates:** Chronological order (supports ISO-8601, US format, EU format, and more)
-
-### Statistics and Visualization
-
-Analyze your data with comprehensive statistics and modern ASCII plots.
-
-**View Statistics:** Press `i` on any column to open an interactive statistics dialog that displays:
-
-**For numeric columns:**
-- Summary stats: count, min, max, range, sum
-- Central tendency: mean, median, mode
-- Dispersion: standard deviation, variance
-- Quartiles: Q1, Q2, Q3, and IQR
-- **Visual distribution:** Histogram plot showing data distribution
-
-**For categorical/string columns:**
-- Total values, unique values, missing/empty count
-- Frequency distribution with percentages
-- **Visual distribution:** Bar chart of top 15 most frequent values
-
-**Important:** When column filters are active, statistics are calculated **only on the filtered/visible data**, not the entire dataset. The dialog title will indicate when statistics are based on filtered data and show the number of active filters.
-
-The statistics dialog features a split-pane layout with numerical stats on the left and an ASCII graph visualization on the right, powered by `asciigraph` for modern, clean plots.
+When filters are active, statistics are computed on the filtered rows only
+and the dialog title says so.
 
 ### Search
 
-Find text anywhere in your table with full highlighting support and powerful regex pattern matching.
+1. Press `/`.
+2. Type the query. Tab moves between the field, the `Use Regex` and
+   `Case Sensitive` checkboxes and the buttons; Space or Enter toggles a
+   focused checkbox.
+3. Press Enter to search, then `n` and `N` to move between matches and `Esc`
+   to clear the highlighting.
 
-**How to search:**
+Plain text search is a case-insensitive substring match unless
+`Case Sensitive` is checked. Regex search uses Go regular expression syntax
+and is case-insensitive unless `Case Sensitive` is checked (ftv prepends
+`(?i)` for you). The current match is highlighted in cyan, other matches in
+grey, and the footer shows the position such as `Match 3/12`.
 
-1. Press `/` to open the search dialog
-2. Type your search term.
-3. **Optional:** Press Tab to navigate to the checkboxes, then Space to enable:
-    - **Use Regex**: for pattern matching with regular expressions.
-    - **Case Sensitive**: for case-sensitive matching.
-4. Press Enter to execute the search.
-5. Navigate results with `n` (next) and `N` (previous).
-6. Press `Esc` to clear highlighting.
+Regex examples:
 
-**Search Modes:**
+- `^ERROR` matches cells starting with ERROR
+- `\.txt$` matches cells ending in .txt
+- `\d{4}-\d{2}-\d{2}` matches ISO dates
+- `user(name)?` matches user or username
+- `error|warning|critical` matches any of the three
+- `@.*\.(com|org)$` matches email domains ending in .com or .org
 
-- **Plain Text (default):** Case-insensitive substring matching. Enable `Case Sensitive` for exact matching.
-- **Regex:** Full regular expression support. By default, regex is case-insensitive. Enable `Case Sensitive` for case-sensitive regex matching.
+### Column filter
 
-**Navigation in Search Dialog:**
-- Type your search query in the text field.
-- Press `Tab` to move between the search field, checkboxes, and buttons.
-- Press `Space` to toggle a checkbox when it is focused.
-- Press `Enter` from anywhere in the form to execute the search.
-- Press `Esc` to cancel and close the dialog.
+1. Move to the column and press `f`.
+2. Pick an operator from the dropdown, enter the value and optionally check
+   `Case Sensitive`.
+3. Press Enter. Repeat on other columns to add more filters; all filters are
+   combined with AND.
+4. Press `f` on a filtered column to edit it (an empty value removes it), or
+   `r` to remove it.
 
-**Visual feedback:**
-- Current match: bright cyan highlight
-- Other matches: gray highlight
-- Footer shows position: `Match 3/12` or `regex matches 3/12`
+Filtered column headers are marked with a magnifier and an orange background,
+and a strip above the footer describes the filter on the current column.
 
-**Example:**
-```
-# Simple text search (case-insensitive)
-/ → type "error" → Enter → n → n → N → Esc
+Operators:
 
-# Case-sensitive text search
-/ → check "Case Sensitive" → type "Error" → Enter
+contains: the cell contains the value
+equals: the cell equals the value
+starts with: the cell starts with the value
+ends with: the cell ends with the value
+regex: the cell matches the regular expression
+Comparison (`>`, `<`, `>=`, `<=`): numeric comparison on any column; cells
+    that do not parse as numbers never match. On a column typed as Date the
+    comparison is chronological and the value must be a date in one of the
+    formats listed above.
 
-# Regex search examples
-/ → check "Use Regex" → type "^ERROR" → Enter     # Lines starting with ERROR (case-insensitive)
-/ → check "Use Regex" and "Case Sensitive" → type "^Error" → Enter # Lines starting with Error (case-sensitive)
-/ → check "Use Regex" → type "\\d{4}-\\d{2}-\\d{2}" → Enter     # Date patterns (YYYY-MM-DD)
-/ → check "Use Regex" → type "user(name)?" → Enter           # Match "user" or "username"
-/ → check "Use Regex" → type "error|warning|critical" → Enter # Match any of these words
-/ → check "Use Regex" → type "@.*\\.(com|org)$" → Enter       # Email domains ending in .com or .org
-```
+Text operators are case-insensitive unless `Case Sensitive` is checked. An
+invalid regex or a non-numeric threshold matches nothing.
 
-**Common Regex Patterns:**
+### Column width limits
 
-| Pattern | Description | Example Match |
-|---------|-------------|---------------|
-| `^start` | Match at beginning of cell | `^Error` matches "Error: failed" |
-| `end$` | Match at end of cell | `\\.txt$` matches "file.txt" |
-| `\\d+` | Match one or more digits | `\\d+` matches "123" |
-| `\\w+@\\w+\\.\\w+` | Match email pattern | Matches "user@example.com" |
-| `word1\\|word2` | Match either word (OR) | `success\\|complete` matches either |
-| `[A-Z]+` | Match uppercase letters | `[A-Z]{3}` matches "USA" |
-| `.*` | Match any characters | `start.*end` matches "start...end" |
-| `\\s+` | Match whitespace | `\\s{2,}` matches 2+ spaces |
-
-**Note:** For case-insensitive regex search, the `(?i)` flag is automatically added to your pattern. For case-sensitive regex, this flag is omitted.
-
-### Column Filter
-
-Show only rows where specific columns match your criteria. **Supports filtering on multiple columns simultaneously**.
-
-**How to filter:**
-
-1. Navigate to the column you want to filter
-2. Press `f` to open the filter dialog
-3. Use the dropdown to select an operator (e.g., `contains`, `equals`, `regex`, `>`).
-4. Enter the value to filter by.
-5. Optionally, check the `Case Sensitive` box.
-6. Press Enter to apply the filter.
-7. **Repeat on other columns to add more filters**
-8. Press `r` on a filtered column to remove that column's filter
-
-**Multi-Column Filtering:**
-
-- Apply filters to **multiple columns** by pressing `f` on each column and entering criteria
-- All filters are combined with AND logic (rows must match all active filters)
-- Each column can have different filter criteria including operators
-- Press `f` on a filtered column to edit or remove its filter (empty query removes the filter)
-- The footer shows how many filters are active
-- Filtered column headers display 🔎 icons with orange background
-
-**Operators:**
-
-| Operator | Description |
-|---|---|
-| `contains` | Matches cells containing the term |
-| `equals` | Matches cells that are exactly the term |
-| `starts with` | Matches cells that start with the term |
-| `ends with` | Matches cells that end with the term |
-| `regex` | Matches cells based on a regular expression |
-| `>` | Numeric: greater than (number columns only) |
-| `<` | Numeric: less than (number columns only) |
-| `>=` | Numeric: greater than or equal (number columns only) |
-| `<=` | Numeric: less than or equal (number columns only) |
-
-**Key Features:**
-- **Numeric operators** (`>`, `<`, `>=`, `<=`): Only work on numeric and date columns (automatically detected). Perform numeric comparisons instead of text matching.
-- **Regex**: Provides the full power of regular expressions for complex pattern matching.
-- **Case-Insensitive by default**: All string-based comparisons are case-insensitive unless the `Case Sensitive` box is checked.
-- **Visual indicator**: Filtered column headers show 🔎 icons and an orange background
-
-**Examples:**
-
-```bash
-# Simple filter - partial match
-Navigate to "Status" column → f → select 'contains' → type "pending" → Enter
-# Result: Matches "Pending", "Pending Review", etc.
-
-# Exact match filter
-Navigate to "Status" column → f → select 'equals' → type "active" → Enter
-# Result: Rows where Status is exactly "active" (case-insensitive)
-
-# Regex filter
-Navigate to "Email" column → f → select 'regex' → type "^.+@gmail\.com$" → Enter
-# Result: Rows where Email ends with "@gmail.com"
-
-# Numeric comparison - greater than
-Navigate to "Age" column → f → select '>' → type "30" → Enter
-# Result: Rows where Age is greater than 30
-
-# Multi-column filtering
-Navigate to "City" column → f → select 'equals' → type "New York" → Enter
-Navigate to "Department" column → f → select 'contains' → type "Engineering" → Enter
-# Result: Rows where City is "New York" AND Department contains "Engineering"
-
-# Edit existing filter
-Navigate to filtered column → f → modify operator/value → Enter
-# Or enter empty text to remove that column's filter
-
-# Remove a specific filter
-Navigate to filtered column → Press r
-# Result: That column's filter removed, other filters remain
-```
-
-**Visual Feedback:**
-- When a filter is active, the filtered column header displays 🔎 icons and an orange background
-- A dedicated **filter strip** appears above the main footer showing the active filter on the current column.
-- Filter strip format: `🔎 Filter Active: [Column Name] [operator] "query"  |  Press 'r' to clear`
-- The strip automatically hides when you move to a different column
-- Press `r` to clear the filter and return to normal view
-
-
-### Text Wrapping
-
-Handle long cell content without horizontal scrolling.
-
-**How to wrap:**
-- Press `W` (capital W) on any column to toggle wrapping
-- First press: wraps at 25 characters with smart word breaks
-- Second press: unwraps back to single line
-
-**Smart wrapping:**
-- Breaks at spaces and hyphens when possible
-- Each column can be wrapped independently
-- Useful for comments, descriptions, URLs
+Columns whose cells exceed 50 characters in the first 100 rows are limited to
+50 characters automatically; longer cells are cut with an ellipsis. Press `W`
+on any column to toggle its limit. Cells are never wrapped onto several lines.
 
 ## Advanced Examples
 
-### Biological Data Formats
+### Bioinformatics formats
 
-ftv handles common bioinformatics file formats with comment/header prefixes.
-
-**VCF files:**
 ```bash
-# Skip VCF metadata lines
-ftv sample.vcf --skip-prefix "##"
-ftv sample.vcf.gz --skip-prefix "##"
+ftv sample.vcf --skip-prefix "##"             # VCF, also works on .vcf.gz
+ftv otu_table.txt --skip-prefix "# "          # QIIME OTU tables
+ftv mutations.maf --skip-prefix "#"           # MAF
+ftv intervals.interval_list --skip-prefix "@" # SAM-style headers
+ftv peaks.bed --skip-prefix "track","browser" # BED with headers
 ```
 
-**QIIME OTU tables:**
+### Everyday use
+
 ```bash
-ftv otu_table.txt --skip-prefix "# "
-```
-
-**MAF (Mutation Annotation Format):**
-```bash
-ftv mutations.maf --skip-prefix "#"
-```
-
-**Interval lists:**
-```bash
-# Skip SAM header lines
-ftv intervals.interval_list --skip-prefix "@HD","@SQ"
-
-# Or skip all @ lines
-ftv intervals.interval_list --skip-prefix "@"
-```
-
-**BED files with headers:**
-```bash
-ftv peaks.bed --skip-prefix "track","browser"
-```
-
-### General Examples
-
-**Large log files:**
-```bash
-# View first 1000 lines only
-ftv app.log -n 1000
-
-# Skip timestamp lines
-ftv app.log --skip-prefix "2024"
-```
-
-**CSV with specific columns:**
-```bash
-# Show only columns 1, 3, and 5
-ftv data.csv --columns 1,3,5
-
-# Hide sensitive columns 2 and 4
-ftv data.csv --hide-columns 2,4
-```
-
-**Pipeline integration:**
-```bash
-# View process list
-ps aux | ftv
-
-# View git log as table
+ftv app.log -n 1000                            # first 1000 lines only
+ftv data.csv --hide-columns 2,4                # hide sensitive columns
 git log --pretty=format:"%h,%an,%ar,%s" | ftv -s ","
-
-# Parse JSON with jq, view as table
 cat data.json | jq -r '.[] | [.id, .name, .value] | @csv' | ftv
+ftv data.txt -s ";"                            # semicolon-delimited
 ```
 
-**Custom delimiters:**
+## Large Files
+
+ftv keeps every cell in memory. A file of a few hundred MB works well; a
+multi-GB file needs several times its size in RAM and will exhaust memory
+without a limit. For very large inputs today:
+
+- `ftv big.csv -m 2048` loads until roughly 2GB of estimated cell data and
+  keeps that much viewable
+- `ftv big.csv -n 1000000` loads the first million lines
+- `ftv big.csv --skip-lines 5000000 -n 1000000` looks at a window further in
+
+A streaming design that indexes row offsets on disk and loads only the visible
+window is the planned next step and would lift this limit.
+
+## Development
+
 ```bash
-# Pipe-separated
-ftv data.txt -s "|"
-
-# Semicolon-separated
-ftv data.txt -s ";"
-
-# Multiple spaces
-ftv data.txt -s "  "
+make build     # build ./ftv
+make test      # go test -race with coverage
+make lint      # golangci-lint (must be installed)
+make snapshot  # local goreleaser dry run (goreleaser must be installed)
 ```
 
----
+Releases are built by GoReleaser from the GitHub Actions `release` workflow
+whenever a `v*` tag is pushed.
 
-## Tips and Tricks
+## Credits
 
-- **Large files?** Let async loading work its magic - the UI appears instantly
-- **Can't find data?** Use `/` to search across all cells
-- **Too many columns?** Use `--columns` to show only what you need
-- **Long text?** Press `W` to wrap the current column
-- **Wrong sort order?** Press `t` to change the column type, then `s` to re-sort
-- **Complex filtering?** Use `OR` for alternatives, `AND` for requirements, `ROR` to combine results
-- **Need insights?** Press `i` for comprehensive statistics with visual plots - histograms for numeric data, frequency charts for categorical data
-- **Prefer mouse?** Click cells to select them, use scroll wheel to navigate, and click buttons in dialogs
+ftv was created by Xiuqiang (Stephen) Chen
+([@codechenx](https://github.com/codechenx)) and originally published at
+https://github.com/codechenx/FastTableViewer under the Apache License 2.0.
+The icon, the demo recording and the bulk of the design are his work. This
+repository continues the project with the full original commit history
+preserved; see [NOTICE](NOTICE) for the attribution notice.
 
 ## License
 
-Apache License - see [LICENSE](LICENSE) file for details.
+Apache License 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
