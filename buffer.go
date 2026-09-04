@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"sort"
 	"strconv"
@@ -58,6 +59,10 @@ func shouldInternColumn(values []string, threshold float64) bool {
 	cardinality := float64(len(seen)) / float64(sampleSize)
 	return cardinality < threshold // Low cardinality = good for interning
 }
+
+// errMemoryLimit is returned by contAppendSli when the configured --memory cap would be exceeded.
+// Loaders stop reading at this point and keep the rows loaded so far.
+var errMemoryLimit = errors.New("memory limit reached")
 
 // Buffer represents a table data structure with concurrent access support
 type Buffer struct {
@@ -135,8 +140,7 @@ func (b *Buffer) contAppendSli(s []string, strict bool) error {
 	// Check memory limit before adding row
 	rowSize := b.estimateRowSize(s)
 	if b.maxMemory > 0 && b.memoryUsage+rowSize > b.maxMemory {
-		return errors.New("Memory limit exceeded: cannot load more data (limit: " +
-			formatBytes(b.maxMemory) + ", current: " + formatBytes(b.memoryUsage) + ")")
+		return fmt.Errorf("%w (limit %s, loaded %s)", errMemoryLimit, formatBytes(b.maxMemory), formatBytes(b.memoryUsage))
 	}
 
 	// Strict mode: enforce column count

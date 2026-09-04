@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -51,13 +52,15 @@ func startAsyncUpdateHandler(updateChan <-chan bool, doneChan <-chan error) {
 				// Update available - will be handled by ticker
 			case err := <-doneChan:
 				loadComplete = true
+				// The UI is already up: report the outcome in the footer and keep
+				// whatever was loaded viewable instead of tearing the screen down.
+				status := "Loaded " + strconv.Itoa(b.rowLen) + " rows"
 				if err != nil {
-					fatalError(err)
+					status = "Stopped after " + strconv.Itoa(b.rowLen) + " rows: " + err.Error()
 				}
-				// Final update
 				app.QueueUpdateDraw(func() {
 					drawBuffer(b, bufferTable)
-					updateFooterWithStatus("Loaded " + strconv.Itoa(b.rowLen) + " rows")
+					updateFooterWithStatus(status)
 				})
 			case <-ticker.C:
 				// Periodic UI update
@@ -139,7 +142,11 @@ func loadAndDisplayAsync(loader func(*Buffer, chan<- bool, chan<- error), source
 // loadAndDisplaySync handles the complete sync loading workflow
 func loadAndDisplaySync(loader func(*Buffer) error, source string) error {
 	if err := loader(b); err != nil {
-		return err
+		if !errors.Is(err, errMemoryLimit) {
+			return err
+		}
+		// Rows loaded before the cap stay viewable; say so in the footer.
+		statusMessage = "Stopped after " + strconv.Itoa(b.rowLen) + " rows: " + err.Error()
 	}
 
 	setupFreezeMode(b)

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -47,7 +48,7 @@ func TestMemoryLimit_Enforcement(t *testing.T) {
 		t.Error("Expected memory limit error, got nil")
 	}
 
-	if !strings.Contains(err.Error(), "Memory limit exceeded") {
+	if !errors.Is(err, errMemoryLimit) {
 		t.Errorf("Expected memory limit error, got: %v", err)
 	}
 }
@@ -241,7 +242,7 @@ func TestMemoryLimit_GracefulDegradation(t *testing.T) {
 		err := b.contAppendSli(row, false)
 		if err != nil {
 			// Should fail gracefully with memory limit error
-			if !strings.Contains(err.Error(), "Memory limit exceeded") {
+			if !errors.Is(err, errMemoryLimit) {
 				t.Errorf("Expected memory limit error, got: %v", err)
 			}
 			break
@@ -322,5 +323,31 @@ func BenchmarkMemoryLimitCheck(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = buf.contAppendSli(row, false)
+	}
+}
+
+func TestMemoryLimit_LoaderKeepsRowsAndReportsLimit(t *testing.T) {
+	args.setDefault()
+	var buf strings.Builder
+	buf.WriteString("id,payload\n")
+	for i := 0; i < 2000; i++ {
+		buf.WriteString(fmt.Sprintf("%d,%s\n", i, strings.Repeat("x", 100)))
+	}
+
+	b := createNewBuffer()
+	b.setMemoryLimit(20 * 1024)
+	err := loadPipeToBuffer(strings.NewReader(buf.String()), b)
+	if !errors.Is(err, errMemoryLimit) {
+		t.Fatalf("expected errMemoryLimit, got %v", err)
+	}
+	if b.rowLen < 2 || b.rowLen >= 2001 {
+		t.Fatalf("expected a partial load, got %d rows", b.rowLen)
+	}
+	// Rows must be in order and post-processing must have run on the partial data.
+	if b.cont[1][0] != "0" {
+		t.Errorf("first data row = %q, want 0", b.cont[1][0])
+	}
+	if b.getColType(0) != colTypeFloat {
+		t.Errorf("column types should be detected on the partial load, got %s", type2name(b.getColType(0)))
 	}
 }

@@ -211,10 +211,17 @@ func loadToBuffer(src loadSource, b *Buffer, updateChan chan<- bool, showProgres
 		return false, nil
 	}
 
+	// loadErr records a memory-limit stop: the rows read so far stay usable, so
+	// post-processing still runs and the error is reported to the caller after.
+	var loadErr error
 	for _, line := range head {
 		stop, err := appendLine(line)
 		if err != nil {
-			return err
+			if !errors.Is(err, errMemoryLimit) {
+				return err
+			}
+			loadErr = err
+			break
 		}
 		if stop {
 			break
@@ -226,14 +233,18 @@ func loadToBuffer(src loadSource, b *Buffer, updateChan chan<- bool, showProgres
 		updateChan <- true
 	}
 
-	for {
+	for loadErr == nil {
 		line, ok := nextLine()
 		if !ok {
 			break
 		}
 		stop, err := appendLine(line)
 		if err != nil {
-			return err
+			if !errors.Is(err, errMemoryLimit) {
+				return err
+			}
+			loadErr = err
+			break
 		}
 		if stop {
 			break
@@ -268,7 +279,7 @@ func loadToBuffer(src loadSource, b *Buffer, updateChan chan<- bool, showProgres
 		b.detectAllColumnTypes()
 		b.enableStringInterning()
 	}
-	return nil
+	return loadErr
 }
 
 // openFileSource prepares a loadSource for the named file (gzip-aware).
