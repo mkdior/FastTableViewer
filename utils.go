@@ -11,15 +11,16 @@ import (
 	"github.com/fatih/color"
 )
 
-// print fatal error and force quite app
+// fatalError restores the terminal, prints err in red and exits with status 1.
+// The UI must be stopped before printing or the message lands on the raw screen.
 func fatalError(err error) {
 	if err != nil {
-		color.Set(color.FgRed)
-		fmt.Println(err)
-		color.Unset()
 		if app != nil {
 			app.Stop()
 		}
+		color.Set(color.FgRed)
+		fmt.Fprintln(os.Stderr, err)
+		color.Unset()
 		if !debug {
 			os.Exit(1)
 		}
