@@ -358,6 +358,12 @@ Columns whose cells exceed 50 characters in the first 100 rows are limited to
 50 characters automatically; longer cells are cut with an ellipsis. Press `W`
 on any column to toggle its limit. Cells are never wrapped onto several lines.
 
+While the cursor is on a cut cell, a floating box shows the full value,
+word-wrapped and titled with the column name. It sits in the half of the
+table that does not hold the cursor and disappears when you move on. Values
+longer than 1000 characters, or too tall to fit in half the table, are not
+previewed.
+
 ## Advanced Examples
 
 ### Bioinformatics formats

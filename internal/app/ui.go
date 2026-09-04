@@ -326,7 +326,8 @@ func drawUI(b *Buffer) error {
 
 	//UI init - add pages to UI container
 	UI = tview.NewPages()
-	UI.AddPage("main", mainPage, true, true)
+	mainView = newCellPreview(mainPage)
+	UI.AddPage("main", mainView, true, true)
 
 	//bufferTable Event
 	//bufferTable update cursor position with throttling to reduce UI redraws
@@ -343,6 +344,7 @@ func drawUI(b *Buffer) error {
 		currentCursorColumn = column
 
 		cursorPosStr = buildCursorPosStr(row, column)
+		updateCellPreview(row, column)
 
 		// Throttle footer updates to reduce unnecessary redraws
 		now := time.Now()
@@ -942,6 +944,7 @@ func drawUI(b *Buffer) error {
 
 			// Redraw the table with updated wrapping
 			drawBuffer(b, bufferTable)
+			updateCellPreview(bufferTable.GetSelection())
 			return nil
 		}
 

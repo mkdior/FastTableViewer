@@ -137,6 +137,8 @@ func getHelpContent() string {
 [::b][` + theme.tag(theme.Text) + `]📏 Text Wrapping[-:-:-]
   [` + theme.tag(theme.Accent) + `]W[-]                   Toggle width limit for current column (50 chars)
                     Long columns (>50 chars) are limited automatically
+                    A cut cell shows its full value in a floating box
+                    while selected (values up to 1000 characters)
 
 [::b][` + theme.tag(theme.Text) + `]📊 Stats[-:-:-]
   [` + theme.tag(theme.Accent) + `]i[-]                   Show stats info for current column

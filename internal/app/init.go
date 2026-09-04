@@ -33,6 +33,7 @@ var args Args
 var debug bool
 var statusMessage string         // Track status message for footer updates
 var mainPage *tview.Frame        // Reference to main page for footer updates
+var mainView *cellPreview        // Main page plus the floating full-value preview
 var bufferTable *tview.Table     // Reference to buffer table
 var fileNameStr string           // Store filename for footer
 var cursorPosStr string          // Store cursor position for footer
