@@ -191,8 +191,10 @@ func pushCountDigit(r rune) bool {
 	if r == '0' && pendingCount == 0 {
 		return false
 	}
-	if pendingCount < maxCountPrefix {
-		pendingCount = pendingCount*10 + int(r-'0')
+	// Ignore digits that would push the count past the cap; the check happens
+	// before the multiplication so it cannot overflow on 32-bit targets.
+	if digit := int(r - '0'); pendingCount <= (maxCountPrefix-digit)/10 {
+		pendingCount = pendingCount*10 + digit
 	}
 	return true
 }

@@ -32,8 +32,15 @@ func TestCountPrefixIsCapped(t *testing.T) {
 		pushCountDigit('9')
 	}
 	raw, _ := takeCount()
-	if raw <= 0 || raw > maxCountPrefix*10 {
-		t.Fatalf("count overflowed or went negative: %d", raw)
+	if raw <= 0 || raw > maxCountPrefix {
+		t.Fatalf("count must stay within the cap, got %d", raw)
+	}
+	pendingCount = 0
+	for _, r := range "1000000000" { // exactly the cap
+		pushCountDigit(r)
+	}
+	if raw, _ := takeCount(); raw != maxCountPrefix {
+		t.Fatalf("the cap itself must be reachable, got %d", raw)
 	}
 }
 
