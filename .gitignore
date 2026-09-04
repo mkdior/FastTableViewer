@@ -25,6 +25,7 @@
 .history/
 
 dist/
+release-notes.md
 coverage.txt
 profile.cov
 

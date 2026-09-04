@@ -56,8 +56,20 @@ checksum:
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
 
+# Release notes come from scripts/release-notes.sh (git log --oneline since the
+# previous tag, in a code block) and are passed with --release-notes; the
+# built-in changelog would prefix every line with "* " and use full hashes.
 changelog:
-  sort: asc
+  disable: true
+
+release:
+  header: |
+    Download the archive for your platform below, extract it and put `ftv` on
+    your `PATH` (for example `/usr/local/bin` or `~/.local/bin`); see the
+    [README](https://github.com/mkdior/FastTableViewer#manual-download) for
+    details. `checksums.txt` holds the SHA-256 sum of every asset.
+  footer: |
+    {{ with .PreviousTag }}Full diff: https://github.com/mkdior/FastTableViewer/compare/{{ . }}...{{ $.Tag }}{{ end }}
 
 nfpms:
   - maintainer: mkdior

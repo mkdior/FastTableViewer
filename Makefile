@@ -41,11 +41,12 @@ uninstall:
 	@sudo rm -f $(INSTALL_PATH)/$(BINARY_NAME)
 	@echo "✓ Uninstalled successfully"
 
-## release: Create a new release (requires goreleaser)
+## release: Create a new release for the tag at HEAD (requires goreleaser)
 release:
 	@which goreleaser > /dev/null || (echo "goreleaser not found. Install: https://goreleaser.com/install/" && exit 1)
 	@echo "Creating release..."
-	@goreleaser release --clean
+	@scripts/release-notes.sh "$$(git describe --tags --exact-match)" > release-notes.md
+	@goreleaser release --clean --release-notes release-notes.md
 
 ## snapshot: Create a snapshot release (local testing)
 snapshot:

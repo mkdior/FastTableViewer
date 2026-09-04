@@ -394,7 +394,9 @@ make snapshot  # local goreleaser dry run (goreleaser must be installed)
 ```
 
 Releases are built by GoReleaser from the GitHub Actions `release` workflow
-whenever a `v*` tag is pushed.
+whenever a `v*` tag is pushed. The release notes are the output of
+`git log --oneline` since the previous tag, produced by
+`scripts/release-notes.sh`.
 
 ### Layout
 
