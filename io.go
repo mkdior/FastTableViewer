@@ -144,7 +144,7 @@ func detectSeparator(name string, lines []string) rune {
 // showProgress is set a progress line is printed to stdout.
 func loadToBuffer(src loadSource, b *Buffer, updateChan chan<- bool, showProgress bool) error {
 	if src.closer != nil {
-		defer src.closer.Close()
+		defer func() { _ = src.closer.Close() }()
 	}
 	loadProgress.Reset(src.totalSize)
 

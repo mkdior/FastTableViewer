@@ -331,7 +331,7 @@ func TestMemoryLimit_LoaderKeepsRowsAndReportsLimit(t *testing.T) {
 	var buf strings.Builder
 	buf.WriteString("id,payload\n")
 	for i := 0; i < 2000; i++ {
-		buf.WriteString(fmt.Sprintf("%d,%s\n", i, strings.Repeat("x", 100)))
+		fmt.Fprintf(&buf, "%d,%s\n", i, strings.Repeat("x", 100))
 	}
 
 	b := createNewBuffer()
