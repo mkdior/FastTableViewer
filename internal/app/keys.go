@@ -62,7 +62,8 @@ func handleTableKey(event *tcell.EventKey) *tcell.EventKey {
 		case actYankRow:
 			yankVisual(true)
 			return nil
-		case actCancel:
+		case actCancel, actQuit:
+			// In visual mode q backs out of the selection like Esc; it never quits.
 			exitVisual("All Done")
 			return nil
 		case actVisual, actVisualRow, actVisualSwap:

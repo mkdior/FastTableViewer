@@ -85,7 +85,7 @@ var actionCatalog = []struct {
 	{actionInfo{actToggleType, "Sort and types", "Toggle the column type (String, Number, Date)", false}, []string{"t"}},
 	{actionInfo{actYank, "Yank", "Copy the current cell to the clipboard", false}, []string{"y"}},
 	{actionInfo{actYankRow, "Yank", "Copy the current row to the clipboard (tab-separated)", false}, []string{"Y"}},
-	{actionInfo{actVisual, "Visual", "Select a block of cells; move to extend, y to copy, Esc to cancel", false}, []string{"v", "ctrl+v"}},
+	{actionInfo{actVisual, "Visual", "Select a block of cells; move to extend, y to copy, Esc or q to cancel", false}, []string{"v", "ctrl+v"}},
 	{actionInfo{actVisualRow, "Visual", "Select whole rows", false}, []string{"V"}},
 	{actionInfo{actVisualSwap, "Visual", "Swap the anchor and the cursor of the selection", false}, []string{"o"}},
 	{actionInfo{actToggleWidth, "View", "Toggle the 50 character width limit on the current column", false}, []string{"W"}},

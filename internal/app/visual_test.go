@@ -110,6 +110,13 @@ func TestVisualRowsCountsAndCancel(t *testing.T) {
 	if visual != visualOff {
 		t.Error("Esc must cancel visual mode")
 	}
+	press(t, "v j q") // q leaves visual mode instead of quitting (app is nil here, so quitting would panic)
+	if visual != visualOff {
+		t.Error("q must cancel visual mode")
+	}
+	if row, _ := bufferTable.GetSelection(); row != 4 {
+		t.Errorf("q must keep the cursor where the motion left it (row 4), got row %d", row)
+	}
 	press(t, "V j t") // a non-motion command (toggle type) leaves visual mode first
 	if visual != visualOff {
 		t.Error("a non-motion command must leave visual mode")
