@@ -660,3 +660,54 @@ func TestDetectSeparator(t *testing.T) {
 		})
 	}
 }
+
+// Upstream issue codechenx/FastTableViewer#25: a semicolon-delimited file was
+// not detected when its lines had differing field counts, and forcing -s ";"
+// exited with "file is empty" because the first UI update carried no rows.
+// The commenter's tab-separated case failed the same way.
+func TestIssue25_SemicolonAndTabFilesLoad(t *testing.T) {
+	cases := []struct {
+		name, ext, content string
+		sep                rune
+		givenSep           rune
+	}{
+		{"semicolon detected despite a ragged line", ".txt", "a;b;c\n1;2;3\n4;5\n6;7;8\n9;10;11\n", ';', 0},
+		{"semicolon forced with -s", ".txt", "a;b;c\n1;2;3\n4;5\n6;7;8\n", ';', ';'},
+		{"semicolon inside a .csv is detected", ".csv", "a;b;c\n1,5;2,5;3\n4;5;6\n", ';', 0},
+		{"tab with pasted extra columns", ".tsv", "a\tb\n1\t2\t3\t4\n5\t6\n7\t8\t9\n", '\t', 0},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			f, err := os.CreateTemp(t.TempDir(), "issue25-*"+tc.ext)
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, _ = f.WriteString(tc.content)
+			_ = f.Close()
+
+			args.setDefault()
+			b := createNewBuffer()
+			b.sep = tc.givenSep
+			updateChan := make(chan bool, 10)
+			doneChan := make(chan error, 1)
+			go loadFileToBufferAsync(f.Name(), b, updateChan, doneChan)
+			select {
+			case <-updateChan:
+			case err := <-doneChan:
+				t.Fatalf("load ended before the first update: %v", err)
+			}
+			if b.rowLen == 0 {
+				t.Fatal("first update must carry rows, otherwise the UI exits as empty")
+			}
+			if err := <-doneChan; err != nil {
+				t.Fatalf("load failed: %v", err)
+			}
+			if b.sep != tc.sep {
+				t.Errorf("separator = %q, want %q", b.sep, tc.sep)
+			}
+			if b.rowLen != strings.Count(tc.content, "\n") {
+				t.Errorf("rowLen = %d, want %d", b.rowLen, strings.Count(tc.content, "\n"))
+			}
+		})
+	}
+}
