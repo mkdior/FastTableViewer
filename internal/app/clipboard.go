@@ -32,30 +32,62 @@ var (
 	clipIsWSL    = detectWSL
 )
 
-// clipboardCommand picks the clipboard tool for this session: clip.exe under
-// WSL, pbcopy on macOS, wl-copy on Wayland, xclip or xsel on X11, and
-// otherwise the first of those that is installed.
-func clipboardCommand() (name string, cmdArgs []string, ok bool) {
-	candidates := [][]string{
-		{"wl-copy"}, {"xclip", "-selection", "clipboard"}, {"xsel", "--clipboard", "--input"}, {"pbcopy"}, {"clip.exe"},
+// Clipboard settings from the config file.
+var (
+	clipboardOverride string // user-supplied command; empty means auto-detect
+	clipboardOSC52    = true // emit the OSC 52 escape
+)
+
+// clipTool is a clipboard command that reads the text from stdin.
+type clipTool struct {
+	label string // shown in the footer
+	name  string // executable looked up on PATH
+	args  []string
+}
+
+// windowsClip copies through cmd.exe so the console code page can be switched
+// to UTF-8 first; plain clip.exe would garble anything outside ASCII.
+var windowsClip = clipTool{"clip.exe", "cmd.exe", []string{"/c", "chcp 65001>nul & clip"}}
+
+var (
+	toolPbcopy   = clipTool{"pbcopy", "pbcopy", nil}
+	toolWlCopy   = clipTool{"wl-copy", "wl-copy", nil}
+	toolXclip    = clipTool{"xclip", "xclip", []string{"-selection", "clipboard"}}
+	toolXsel     = clipTool{"xsel", "xsel", []string{"--clipboard", "--input"}}
+	toolTermux   = clipTool{"termux-clipboard-set", "termux-clipboard-set", nil}
+	toolClipExe  = clipTool{"clip.exe", "clip.exe", nil}
+	allClipTools = []clipTool{toolWlCopy, toolXclip, toolXsel, toolPbcopy, windowsClip, toolClipExe, toolTermux}
+)
+
+// clipboardCommand picks the clipboard tool for the running system:
+// Windows and WSL copy into the Windows clipboard, macOS uses pbcopy,
+// Wayland wl-copy, X11 xclip or xsel, Termux its clipboard helper, and
+// anything else the first of those that is installed. A command from the
+// config file replaces the detection.
+func clipboardCommand() (clipTool, bool) {
+	if clipboardOverride != "" {
+		fields := strings.Fields(clipboardOverride)
+		return clipTool{label: fields[0], name: fields[0], args: fields[1:]}, true
 	}
-	var preferred [][]string
+	var preferred []clipTool
 	switch {
-	case clipIsWSL():
-		preferred = [][]string{{"clip.exe"}}
+	case clipGOOS == "windows", clipIsWSL():
+		preferred = []clipTool{windowsClip, toolClipExe}
 	case clipGOOS == "darwin":
-		preferred = [][]string{{"pbcopy"}}
+		preferred = []clipTool{toolPbcopy}
+	case clipGetenv("TERMUX_VERSION") != "":
+		preferred = []clipTool{toolTermux}
 	case clipGetenv("WAYLAND_DISPLAY") != "":
-		preferred = [][]string{{"wl-copy"}}
+		preferred = []clipTool{toolWlCopy}
 	case clipGetenv("DISPLAY") != "":
-		preferred = [][]string{{"xclip", "-selection", "clipboard"}, {"xsel", "--clipboard", "--input"}}
+		preferred = []clipTool{toolXclip, toolXsel}
 	}
-	for _, c := range append(preferred, candidates...) {
-		if _, err := clipLookPath(c[0]); err == nil {
-			return c[0], c[1:], true
+	for _, tool := range append(preferred, allClipTools...) {
+		if _, err := clipLookPath(tool.name); err == nil {
+			return tool, true
 		}
 	}
-	return "", nil, false
+	return clipTool{}, false
 }
 
 // detectWSL reports whether the process runs under Windows Subsystem for Linux.
@@ -68,9 +100,16 @@ func detectWSL() bool {
 }
 
 // runClipboardTool pipes text into the tool's stdin.
-func runClipboardTool(name string, cmdArgs []string, text string) error {
-	cmd := exec.Command(name, cmdArgs...)
+func runClipboardTool(tool clipTool, text string) error {
+	cmd := exec.Command(tool.name, tool.args...)
 	cmd.Stdin = strings.NewReader(text)
+	if strings.HasSuffix(tool.name, ".exe") && clipIsWSL() {
+		// Windows programs cannot use a WSL path as their working directory
+		// and warn about it; start them from the Windows drive instead.
+		if info, err := os.Stat("/mnt/c/"); err == nil && info.IsDir() {
+			cmd.Dir = "/mnt/c/"
+		}
+	}
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -78,7 +117,7 @@ func runClipboardTool(name string, cmdArgs []string, text string) error {
 		if msg == "" {
 			msg = err.Error()
 		}
-		return fmt.Errorf("%s: %s", name, msg)
+		return fmt.Errorf("%s: %s", tool.label, msg)
 	}
 	return nil
 }
@@ -94,18 +133,22 @@ func copyToClipboard(text string) (string, error) {
 	var channels []string
 	var problems []string
 
-	if screenRef != nil && len(text) <= maxOSC52Bytes {
-		screenRef.SetClipboard([]byte(text))
-		channels = append(channels, "OSC 52")
-	}
-	if name, cmdArgs, ok := clipboardCommand(); ok {
-		if err := clipRun(name, cmdArgs, text); err != nil {
+	if tool, ok := clipboardCommand(); ok {
+		if err := clipRun(tool, text); err != nil {
 			problems = append(problems, err.Error())
 		} else {
-			channels = append(channels, name)
+			channels = append(channels, tool.label)
 		}
-	} else if len(channels) == 0 {
-		problems = append(problems, "no clipboard tool found (wl-copy, xclip, xsel, pbcopy or clip.exe)")
+	} else {
+		problems = append(problems, "no clipboard tool found (wl-copy, xclip, xsel, pbcopy, clip.exe or termux-clipboard-set)")
+	}
+	if clipboardOSC52 && screenRef != nil && len(text) <= maxOSC52Bytes {
+		screenRef.SetClipboard([]byte(text))
+		if len(channels) == 0 {
+			// Unverifiable on its own: the terminal may ignore the escape.
+			return "OSC 52 only (" + strings.Join(problems, "; ") + ")", nil
+		}
+		channels = append(channels, "OSC 52")
 	}
 
 	if len(channels) == 0 {

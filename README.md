@@ -378,12 +378,24 @@ invalid regex or a non-numeric threshold matches nothing.
 
 `y` copies the current cell and `Y` the current row to the system clipboard.
 Rows and blocks are tab-separated with one line per row, so they paste
-straight into a spreadsheet or a shell. ftv uses every channel that can
-reach the clipboard: the OSC 52 terminal escape (tmux forwards it when
-`set -g set-clipboard on` is set; payloads over 1MB skip it) and a clipboard
-tool when one is installed: `clip.exe` under WSL, `pbcopy` on macOS,
-`wl-copy` on Wayland, `xclip` or `xsel` on X11. The footer reports which
-channels were used. Yanks over 50MB are refused.
+straight into a spreadsheet or a shell. Yanks over 50MB are refused.
+
+ftv detects the clipboard of the system it runs on and also sends the OSC 52
+terminal escape (tmux forwards it when `set -g set-clipboard on` is set;
+payloads over 1MB skip it). The footer reports which channels were used.
+
+Windows and WSL: the Windows clipboard through `cmd.exe /c chcp 65001 & clip`,
+    so non-ASCII text survives; plain `clip.exe` if `cmd.exe` is missing
+macOS: `pbcopy`
+Linux on Wayland: `wl-copy` (wl-clipboard)
+Linux on X11: `xclip`, else `xsel`
+Termux: `termux-clipboard-set`
+Anything else: the first of those that is installed, else OSC 52 alone, in
+    which case the footer says the copy could not be verified
+
+To use another program, set `command` in the `[clipboard]` section of the
+config file to anything that reads the text on stdin; `osc52 = false` turns
+the escape off.
 
 ### Visual mode
 
@@ -479,6 +491,18 @@ Roles: `background`, `text`, `dim`, `panel`, `stripe`, `border`, `accent`,
 name       = "subcore"
 accent     = "colour208"
 alert      = "#ff5f5f"
+```
+
+### [clipboard]
+
+command: a program that reads the text to copy on stdin, replacing the
+    automatic detection, for example `xclip -selection clipboard`
+osc52: `true` (default) or `false`; whether to also send the OSC 52 escape
+
+```toml
+[clipboard]
+command = "wl-copy --primary"
+osc52   = false
 ```
 
 ## Large Files

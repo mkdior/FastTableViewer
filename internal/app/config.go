@@ -23,8 +23,15 @@ import (
 //	name = "subcore"            # built-in scheme to start from
 //	accent = "colour101"        # colour roles: colour<n>, #rrggbb or a colour name
 type Config struct {
-	Keys  map[string]keyList `toml:"keys"`
-	Theme map[string]string  `toml:"theme"`
+	Keys      map[string]keyList `toml:"keys"`
+	Theme     map[string]string  `toml:"theme"`
+	Clipboard ClipboardConfig    `toml:"clipboard"`
+}
+
+// ClipboardConfig overrides how yanked text reaches the clipboard.
+type ClipboardConfig struct {
+	Command string `toml:"command"` // command reading the text on stdin; empty means auto-detect
+	OSC52   *bool  `toml:"osc52"`   // also emit the OSC 52 escape (default true)
 }
 
 // keyList is one key or a list of keys in TOML.
@@ -135,6 +142,8 @@ func applyConfig(cfg Config, themeFlag string) error {
 	}
 	theme = t
 	keys = km
+	clipboardOverride = strings.TrimSpace(cfg.Clipboard.Command)
+	clipboardOSC52 = cfg.Clipboard.OSC52 == nil || *cfg.Clipboard.OSC52
 	return nil
 }
 
@@ -203,6 +212,12 @@ func dumpConfig(w io.Writer) error {
 	for _, role := range themeRoleNames {
 		fmt.Fprintf(&sb, "%-11s = %q\n", role, colorSpec(*roles[role]))
 	}
+	sb.WriteString("\n# Clipboard: by default ftv detects the system (Windows and WSL, macOS, Wayland,\n")
+	sb.WriteString("# X11, Termux) and also sends the OSC 52 escape. command replaces the detection\n")
+	sb.WriteString("# with a program that reads the text on stdin, e.g. \"xclip -selection clipboard\".\n\n")
+	sb.WriteString("[clipboard]\n")
+	sb.WriteString("command = \"\"\n")
+	sb.WriteString("osc52   = true\n")
 	_, err := io.WriteString(w, sb.String())
 	return err
 }
