@@ -152,16 +152,17 @@ func loadToBuffer(src loadSource, b *Buffer, updateChan chan<- bool, showProgres
 		return "", false
 	}
 
-	// Read a small sample up front so the separator can be inferred.
+	// Read a small sample up front so the separator can be inferred and so the
+	// UI has rows to show when it is first signalled.
 	var head []string
-	if b.sep == 0 {
-		for len(head) < separatorSampleLines {
-			line, ok := nextLine()
-			if !ok {
-				break
-			}
-			head = append(head, line)
+	for len(head) < separatorSampleLines {
+		line, ok := nextLine()
+		if !ok {
+			break
 		}
+		head = append(head, line)
+	}
+	if b.sep == 0 {
 		b.sep = detectSeparator(src.name, head)
 	}
 	if b.sep == 0 {

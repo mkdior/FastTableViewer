@@ -561,3 +561,27 @@ func TestLoadFileToBufferAsync_PreservesRowOrder(t *testing.T) {
 		}
 	}
 }
+
+func TestLoadFileToBufferAsync_SeparatorGivenSignalsWithRows(t *testing.T) {
+	args.setDefault()
+	b := createNewBuffer()
+	b.sep = '|'
+	updateChan := make(chan bool, 10)
+	doneChan := make(chan error, 1)
+	go loadFileToBufferAsync("./data/test/pipe_delimited.txt", b, updateChan, doneChan)
+
+	select {
+	case <-updateChan:
+	case err := <-doneChan:
+		t.Fatalf("finished before first update: %v", err)
+	}
+	if b.rowLen == 0 {
+		t.Fatal("first update must carry rows even when the separator is given; otherwise the UI exits as empty")
+	}
+	if err := <-doneChan; err != nil {
+		t.Fatal(err)
+	}
+	if b.rowLen != 4 || b.colLen != 4 {
+		t.Errorf("rows=%d cols=%d, want 4x4", b.rowLen, b.colLen)
+	}
+}
