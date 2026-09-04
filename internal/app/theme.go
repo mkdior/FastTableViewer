@@ -1,56 +1,111 @@
 package app
 
 import (
+	"fmt"
+	"sort"
+	"strings"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
-// The palette mirrors the "Subcore" colours of the maintainer's tmux status
-// bar, given as xterm-256 indices. tcell.PaletteColor emits the same indices
-// tmux does, so a terminal palette override applies to both alike.
-var (
-	colBg     = tcell.PaletteColor(233) // background (tmux status-bg)
-	colText   = tcell.PaletteColor(252) // default text (tmux status-fg)
-	colDim    = tcell.PaletteColor(239) // secondary text, inactive windows
-	colPanel  = tcell.PaletteColor(237) // raised surfaces: header, fields, mode-style
-	colStripe = tcell.PaletteColor(235) // alternate rows in the statistics table
-	colBorder = tcell.PaletteColor(238) // separators (tmux pane-border)
-	colAccent = tcell.PaletteColor(101) // olive: active pane, current window, keys
-	colAlert  = tcell.PaletteColor(131) // muted red: filters and attention
-)
+// Theme is the set of colours the UI draws with. Every element takes its
+// colour from one of these roles, so a new scheme is just a new Theme value.
+// Colours are tcell values: palette indices (tcell.PaletteColor), named
+// colours (tcell.ColorRed) and true colour (tcell.NewHexColor) all work.
+type Theme struct {
+	Background tcell.Color // window and cell background
+	Text       tcell.Color // default text
+	Dim        tcell.Color // secondary text: footer position, hints, inactive borders
+	Panel      tcell.Color // raised surfaces: header row, input fields, highlights
+	Stripe     tcell.Color // alternate rows in the statistics table
+	Border     tcell.Color // table separators
+	Accent     tcell.Color // cursor, frozen column, footer file name, dialog borders, keys
+	Alert      tcell.Color // active filters and the filter strip
+}
 
-// Hex twins of the palette for tview's inline colour tags in the help text,
-// which accept names and #rrggbb but not palette indices.
-const (
-	hexText   = "#d0d0d0" // colour252
-	hexDim    = "#4e4e4e" // colour239
-	hexAccent = "#87875f" // colour101
-)
+// selectedStyle is the cursor cell and the focused dialog button.
+func (t Theme) selectedStyle() tcell.Style {
+	return tcell.Style{}.Background(t.Accent).Foreground(t.Background).Bold(true)
+}
 
-// selectedStyle is the cursor cell, styled like tmux's status-left segment.
-var selectedStyle = tcell.Style{}.Background(colAccent).Foreground(colBg).Bold(true)
+// highlightStyle marks secondary highlights such as other search matches.
+func (t Theme) highlightStyle() tcell.Style {
+	return tcell.Style{}.Background(t.Panel).Foreground(t.Accent)
+}
 
-// highlightStyle marks secondary highlights such as other search matches,
-// styled like tmux's mode-style (copy-mode selection).
-var highlightStyle = tcell.Style{}.Background(colPanel).Foreground(colAccent)
+// tag renders a colour as an inline colour tag for tview dynamic-colour text.
+// Tags accept #rrggbb but not palette indices, so the colour is resolved to
+// its RGB value; colours without one fall back to the default foreground.
+func (t Theme) tag(c tcell.Color) string {
+	hex := c.Hex()
+	if hex < 0 {
+		return "[-]"
+	}
+	return fmt.Sprintf("[#%06x]", hex)
+}
 
-// styleForm applies the palette to a dialog form, its checkboxes and buttons.
-// Call it after all items and buttons have been added.
+// builtinThemes are the schemes selectable with --theme. Add a scheme here
+// (or register one from a config file later) and it is available by name.
+var builtinThemes = map[string]Theme{
+	// subcore mirrors the maintainer's tmux status bar; the values are the
+	// xterm-256 indices used in tmux.conf, so terminal palette overrides
+	// apply to both alike.
+	"subcore": {
+		Background: tcell.PaletteColor(233),
+		Text:       tcell.PaletteColor(252),
+		Dim:        tcell.PaletteColor(239),
+		Panel:      tcell.PaletteColor(237),
+		Stripe:     tcell.PaletteColor(235),
+		Border:     tcell.PaletteColor(238),
+		Accent:     tcell.PaletteColor(101),
+		Alert:      tcell.PaletteColor(131),
+	},
+}
+
+// defaultThemeName is the scheme used when --theme is not given.
+const defaultThemeName = "subcore"
+
+// theme is the active scheme. setTheme replaces it before the UI is built.
+var theme = builtinThemes[defaultThemeName]
+
+// setTheme activates the named built-in scheme.
+func setTheme(name string) error {
+	t, ok := builtinThemes[name]
+	if !ok {
+		return fmt.Errorf("unknown theme %q; available: %s", name, strings.Join(themeNames(), ", "))
+	}
+	theme = t
+	return nil
+}
+
+// themeNames lists the built-in schemes in alphabetical order.
+func themeNames() []string {
+	names := make([]string, 0, len(builtinThemes))
+	for name := range builtinThemes {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
+}
+
+// styleForm applies the active theme to a dialog form, its checkboxes and
+// buttons. Call it after all items and buttons have been added.
 func styleForm(form *tview.Form) {
 	form.SetBorder(true)
-	form.SetBorderColor(colAccent)
-	form.SetBackgroundColor(colBg)
-	form.SetLabelColor(colText)
-	form.SetFieldBackgroundColor(colPanel)
-	form.SetFieldTextColor(colText)
-	form.SetButtonBackgroundColor(colPanel)
-	form.SetButtonTextColor(colText)
+	form.SetBorderColor(theme.Accent)
+	form.SetBackgroundColor(theme.Background)
+	form.SetLabelColor(theme.Text)
+	form.SetFieldBackgroundColor(theme.Panel)
+	form.SetFieldTextColor(theme.Text)
+	form.SetButtonBackgroundColor(theme.Panel)
+	form.SetButtonTextColor(theme.Text)
 	for i := 0; i < form.GetButtonCount(); i++ {
-		form.GetButton(i).SetActivatedStyle(selectedStyle)
+		form.GetButton(i).SetActivatedStyle(theme.selectedStyle())
 	}
 	for i := 0; i < form.GetFormItemCount(); i++ {
 		if cb, ok := form.GetFormItem(i).(*tview.Checkbox); ok {
-			cb.SetLabelColor(colText).SetFieldBackgroundColor(colPanel).SetFieldTextColor(colAccent)
+			cb.SetLabelColor(theme.Text).SetFieldBackgroundColor(theme.Panel).SetFieldTextColor(theme.Accent)
 		}
 	}
 }

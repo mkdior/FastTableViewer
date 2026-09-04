@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -180,6 +181,11 @@ func Execute(version string) {
 				b.sep = []rune(args.Sep)[0]
 			}
 
+			if err := setTheme(args.Theme); err != nil {
+				stopView()
+				fatalError(err)
+			}
+
 			// Configure memory limit
 			if args.MemoryMB > 0 {
 				b.setMemoryLimit(int64(args.MemoryMB) * 1024 * 1024) // Convert MB to bytes
@@ -254,6 +260,7 @@ func Execute(version string) {
 	RootCmd.Flags().BoolVar(&args.Strict, "strict", false, "Strict mode: fail on missing/inconsistent data")
 	RootCmd.Flags().BoolVar(&args.AsyncLoad, "async", true, "Progressive rendering while loading")
 	RootCmd.Flags().IntVarP(&args.MemoryMB, "memory", "m", 0, "Memory limit in MB (0=unlimited/default, >0=set limit)")
+	RootCmd.Flags().StringVar(&args.Theme, "theme", defaultThemeName, "Colour scheme: "+strings.Join(themeNames(), ", "))
 	RootCmd.Flags().SortFlags = false
 	err := RootCmd.Execute()
 	fatalError(err)

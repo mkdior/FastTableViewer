@@ -115,9 +115,9 @@ func updateFooterWithStatus(status string) {
 	if mainPage != nil {
 		// Update the footer by rebuilding it
 		mainPage.Clear()
-		mainPage.AddText(fileNameStr, false, tview.AlignLeft, colAccent).
-			AddText(status, false, tview.AlignCenter, colText).
-			AddText(cursorPosStr, false, tview.AlignRight, colDim)
+		mainPage.AddText(fileNameStr, false, tview.AlignLeft, theme.Accent).
+			AddText(status, false, tview.AlignCenter, theme.Text).
+			AddText(cursorPosStr, false, tview.AlignRight, theme.Dim)
 	}
 }
 

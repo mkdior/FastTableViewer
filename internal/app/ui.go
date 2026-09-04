@@ -81,8 +81,8 @@ func (c *bufferContent) GetCell(r, col int) *tview.TableCell {
 	rowFreeze, colFreeze := b.rowFreeze, b.colFreeze
 	b.mu.RUnlock()
 
-	color := colText
-	backgroundColor := colBg
+	color := theme.Text
+	backgroundColor := theme.Background
 	attributes := tcell.AttrNone
 	alignment := tview.AlignLeft
 
@@ -92,8 +92,8 @@ func (c *bufferContent) GetCell(r, col int) *tview.TableCell {
 
 	if isHeaderRow {
 		// Header row: a raised panel, like tmux's mode-style background
-		color = colText
-		backgroundColor = colPanel
+		color = theme.Text
+		backgroundColor = theme.Panel
 		attributes = tcell.AttrBold
 		alignment = tview.AlignCenter
 
@@ -101,13 +101,13 @@ func (c *bufferContent) GetCell(r, col int) *tview.TableCell {
 		if isFiltered {
 			if _, hasFilter := activeFilters[col]; hasFilter {
 				cellText = "🔎 " + cellText + " 🔎"
-				backgroundColor = colAlert
-				color = colBg
+				backgroundColor = theme.Alert
+				color = theme.Background
 			}
 		}
 	} else if isHeaderCol {
 		// Frozen column: accent text, like the current window in tmux
-		color = colAccent
+		color = theme.Accent
 		attributes = tcell.AttrBold
 	}
 
@@ -118,12 +118,12 @@ func (c *bufferContent) GetCell(r, col int) *tview.TableCell {
 				searchResults[currentSearchIndex].Row == r &&
 				searchResults[currentSearchIndex].Col == col {
 				// Current match (also the selected cell): accent block
-				backgroundColor = colAccent
-				color = colBg
+				backgroundColor = theme.Accent
+				color = theme.Background
 				attributes = tcell.AttrBold
 			} else {
 				// Other matches: tmux mode-style highlight
-				backgroundColor, color, _ = highlightStyle.Decompose()
+				backgroundColor, color, _ = theme.highlightStyle().Decompose()
 				attributes = tcell.AttrNone
 			}
 		}
@@ -244,17 +244,17 @@ func drawStats(s statsSummary, t *tview.Table) {
 
 	for r := 0; r < rows; r++ {
 		for c := 0; c < cols; c++ {
-			color := colText
-			backgroundColor := colBg
+			color := theme.Text
+			backgroundColor := theme.Background
 
 			// Alternate row colors for better readability
 			if r%2 == 1 {
-				backgroundColor = colStripe
+				backgroundColor = theme.Stripe
 			}
 
 			// Highlight stat labels with the accent color
 			if c == 0 {
-				color = colAccent
+				color = theme.Accent
 			}
 
 			t.SetCell(r, c,
@@ -274,11 +274,11 @@ func drawUI(b *Buffer) error {
 	bufferTable.SetSelectable(true, true)
 	bufferTable.SetBorders(false)
 	bufferTable.SetSeparator(tview.Borders.Vertical)             // Add subtle vertical separators
-	bufferTable.SetBordersColor(colBorder)
-	bufferTable.SetBackgroundColor(colBg)
+	bufferTable.SetBordersColor(theme.Border)
+	bufferTable.SetBackgroundColor(theme.Background)
 	bufferTable.SetFixed(b.rowFreeze, b.colFreeze)
 	bufferTable.Select(firstDataRow(b), 0)
-	bufferTable.SetSelectedStyle(selectedStyle)
+	bufferTable.SetSelectedStyle(theme.selectedStyle())
 
 	// Auto-detect and wrap long columns (sample first 100 rows, threshold 50 characters)
 	detectAndWrapLongColumns(b, 100, 50)
@@ -296,17 +296,17 @@ func drawUI(b *Buffer) error {
 
 	mainPage = tview.NewFrame(bufferTable).
 		SetBorders(0, 0, 0, 0, 0, 0)
-	mainPage.SetBackgroundColor(colBg)
+	mainPage.SetBackgroundColor(theme.Background)
 
 	// Add filter info strip at top if filter is active and cursor on filtered column
 	if filterInfoStr != "" {
-		mainPage.AddText(filterInfoStr, true, tview.AlignCenter, colAlert)
+		mainPage.AddText(filterInfoStr, true, tview.AlignCenter, theme.Alert)
 	}
 
 	// Add main footer at bottom
-	mainPage.AddText(fileNameStr, false, tview.AlignLeft, colAccent).
-		AddText(statusMessage, false, tview.AlignCenter, colText).
-		AddText(cursorPosStr, false, tview.AlignRight, colDim)
+	mainPage.AddText(fileNameStr, false, tview.AlignLeft, theme.Accent).
+		AddText(statusMessage, false, tview.AlignCenter, theme.Text).
+		AddText(cursorPosStr, false, tview.AlignRight, theme.Dim)
 
 	drawFooterText := func(lstr, cstr, rstr string) {
 		statusMessage = cstr // Update global status
@@ -315,13 +315,13 @@ func drawUI(b *Buffer) error {
 		// Add filter info strip at top if filter is active and cursor on filtered column
 		filterInfoStr := buildFilterInfoStr(currentCursorColumn)
 		if filterInfoStr != "" {
-			mainPage.AddText(filterInfoStr, true, tview.AlignCenter, colAlert)
+			mainPage.AddText(filterInfoStr, true, tview.AlignCenter, theme.Alert)
 		}
 
 		// Add main footer at bottom
-		mainPage.AddText(lstr, false, tview.AlignLeft, colAccent).
-			AddText(cstr, false, tview.AlignCenter, colText).
-			AddText(rstr, false, tview.AlignRight, colDim)
+		mainPage.AddText(lstr, false, tview.AlignLeft, theme.Accent).
+			AddText(cstr, false, tview.AlignCenter, theme.Text).
+			AddText(rstr, false, tview.AlignRight, theme.Dim)
 	}
 
 	//UI init - add pages to UI container
@@ -1011,9 +1011,9 @@ func showHelpDialog() {
 	helpText.SetBorder(true)
 	helpText.SetTitle(" ❓ Help - Press ? or q or Esc to close ")
 	helpText.SetTitleAlign(tview.AlignCenter)
-	helpText.SetBorderColor(colAccent)
-	helpText.SetBackgroundColor(colBg)
-	helpText.SetTextColor(colText)
+	helpText.SetBorderColor(theme.Accent)
+	helpText.SetBackgroundColor(theme.Background)
+	helpText.SetTextColor(theme.Text)
 
 	// Handle key events to close dialog
 	helpText.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -1094,9 +1094,9 @@ func showStatsDialog(statsS statsSummary, columnName string, colType int) {
 
 	// Create border with title and modern styling
 	statsTable.SetBorder(true)
-	statsTable.SetBorderColor(colAccent)
-	statsTable.SetBackgroundColor(colBg)
-	statsTable.SetSelectedStyle(highlightStyle)
+	statsTable.SetBorderColor(theme.Accent)
+	statsTable.SetBackgroundColor(theme.Background)
+	statsTable.SetSelectedStyle(theme.highlightStyle())
 
 	typeName := type2name(colType)
 	title := fmt.Sprintf(" 📊 Statistics: %s [%s] ", columnName, typeName)
@@ -1117,9 +1117,9 @@ func showStatsDialog(statsS statsSummary, columnName string, colType int) {
 	plotView.SetBorder(true)
 	plotView.SetTitle(" 📈 Visual Distribution ")
 	plotView.SetTitleAlign(tview.AlignCenter)
-	plotView.SetBorderColor(colDim)
-	plotView.SetBackgroundColor(colBg)
-	plotView.SetTextColor(colText)
+	plotView.SetBorderColor(theme.Dim)
+	plotView.SetBackgroundColor(theme.Background)
+	plotView.SetTextColor(theme.Text)
 
 	// Create a flex layout with stats on left and plot on right
 	statsContent := tview.NewFlex().
@@ -1203,7 +1203,7 @@ func showStatsDialog(statsS statsSummary, columnName string, colType int) {
 			AddItem(tview.NewTextView().
 				SetText("Press q or Esc to close").
 				SetTextAlign(tview.AlignCenter).
-				SetTextColor(colDim), 1, 0, false).
+				SetTextColor(theme.Dim), 1, 0, false).
 			AddItem(nil, 0, 1, false), 0, 80, true).
 		AddItem(nil, 0, 1, false)
 

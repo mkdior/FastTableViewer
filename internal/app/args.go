@@ -13,6 +13,7 @@ type Args struct {
 	Strict     bool     // check for missing data
 	AsyncLoad  bool     // enable async loading for progressive rendering
 	MemoryMB   int      // Memory limit in MB (0 = unlimited/default, >0 = custom limit)
+	Theme      string   // name of the colour scheme (see builtinThemes)
 }
 
 func (args *Args) setDefault() {
@@ -26,4 +27,5 @@ func (args *Args) setDefault() {
 	args.Strict = false
 	args.AsyncLoad = true // default to async loading
 	args.MemoryMB = 0     // Unlimited by default
+	args.Theme = defaultThemeName
 }

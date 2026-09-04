@@ -203,6 +203,13 @@ Default: `0`
 Effect: stop loading when the estimated memory use reaches the limit; the rows
     loaded so far stay viewable and the footer says why loading stopped
 
+### --theme
+
+Argument: name of a built-in colour scheme
+Default: `subcore`
+Effect: selects the colours the table, footer and dialogs use; the list of
+    schemes is shown in `--help`
+
 ### --help, --version
 
 Short: `-h`, `-v`
@@ -400,6 +407,14 @@ Releases are built by GoReleaser from the GitHub Actions `release` workflow
 whenever a `v*` tag is pushed. The release notes are the output of
 `git log --oneline` since the previous tag, produced by
 `scripts/release-notes.sh`.
+
+### Colour schemes
+
+Every colour the UI uses comes from one `Theme` value in
+`internal/app/theme.go`, keyed by role (background, text, accent, alert and
+so on). To add a scheme, add an entry to `builtinThemes`; it becomes
+selectable with `--theme <name>`. Colours may be xterm-256 palette indices,
+named colours or true colour.
 
 ### Layout
 
