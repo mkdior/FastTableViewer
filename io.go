@@ -12,6 +12,9 @@ import (
 	"time"
 )
 
+// errSeparatorNotDetected is returned when no delimiter could be inferred from the input.
+const errSeparatorNotDetected = "ftv cannot identify the separator; set it manually with -s"
+
 // progressTracker helps display loading progress
 type progressTracker struct {
 	total        int64
@@ -157,7 +160,7 @@ func loadFileToBufferAsync(fn string, b *Buffer, updateChan chan<- bool, doneCha
 	}
 	//check final separator
 	if b.sep == 0 {
-		doneChan <- errors.New("tv can't identify separator, you need to set it manual")
+		doneChan <- errors.New(errSeparatorNotDetected)
 		return
 	}
 
@@ -300,7 +303,7 @@ func loadFileToBuffer(fn string, b *Buffer) error {
 	}
 	//check final separator
 	if b.sep == 0 {
-		fatalError(errors.New("tv can't identify separator, you need to set it manual"))
+		return errors.New(errSeparatorNotDetected)
 	}
 
 	//add detectLines to buffer
@@ -406,7 +409,7 @@ func loadPipeToBufferAsync(stdin io.Reader, b *Buffer, updateChan chan<- bool, d
 	}
 	//check final separator
 	if b.sep == 0 {
-		doneChan <- errors.New("tv can't identify separator, you need to set it manual")
+		doneChan <- errors.New(errSeparatorNotDetected)
 		return
 	}
 
@@ -530,7 +533,7 @@ func loadPipeToBuffer(stdin io.Reader, b *Buffer) error {
 	}
 	//check final separator
 	if b.sep == 0 {
-		fatalError(errors.New("tv can't identify separator, you need to set it manual"))
+		return errors.New(errSeparatorNotDetected)
 	}
 
 	//add detectLines to buffer

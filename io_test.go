@@ -168,7 +168,18 @@ func TestLoadPipeToBuffer(t *testing.T) {
 }
 
 func TestLoadPipeToBuffer_Empty(t *testing.T) {
-	t.Skip("Skipping empty pipe test - causes program exit")
+	args.setDefault()
+	b := createNewBuffer()
+	err := loadPipeToBuffer(strings.NewReader(""), b)
+	if err == nil {
+		t.Fatal("expected separator detection error for empty input, got nil")
+	}
+	if !strings.Contains(err.Error(), "separator") {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if b.rowLen != 0 {
+		t.Errorf("rowLen = %d, want 0", b.rowLen)
+	}
 }
 
 func TestLoadPipeToBuffer_LargeData(t *testing.T) {
