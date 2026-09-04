@@ -5,7 +5,7 @@ set -e
 # Automatically detects platform and installs the latest release
 
 get_latest_release() {
-    curl --silent "https://api.github.com/repos/codechenx/FastTableViewer/releases/latest" |
+    curl --silent "https://api.github.com/repos/mkdior/FastTableViewer/releases/latest" |
         grep '"tag_name":' |
         sed -E 's/.*"v([^"]+)".*/\1/'
 }
@@ -58,8 +58,8 @@ main() {
     echo "Latest version: v$version"
     
     # Construct download URL
-    filename="FastTableViewer_${version}_${platform}.tar.gz"
-    url="https://github.com/codechenx/FastTableViewer/releases/download/v${version}/${filename}"
+    filename="ftv_${version}_${platform}.tar.gz"
+    url="https://github.com/mkdior/FastTableViewer/releases/download/v${version}/${filename}"
     
     echo "Downloading: $url"
     
@@ -74,7 +74,7 @@ main() {
     fi
     
     # Move binary to current directory
-    mv "$tmp_dir/FastTableViewer" "$PWD/ftv"
+    mv "$tmp_dir/ftv" "$PWD/ftv"
     chmod +x "$PWD/ftv"
     
     echo
