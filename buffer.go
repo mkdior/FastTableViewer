@@ -274,6 +274,9 @@ func (b *Buffer) resizeCol(n int) {
 // colIndex: column to sort by
 // rev: true for descending, false for ascending
 func (b *Buffer) sortByStr(colIndex int, rev bool) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
 	hasHeader := I2B(b.rowFreeze)
 
 	if rev {
@@ -303,6 +306,9 @@ func (b *Buffer) sortByStr(colIndex int, rev bool) {
 
 // sortByNum sorts column by number format with optimized numeric conversion
 func (b *Buffer) sortByNum(colIndex int, rev bool) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
 	hasHeader := I2B(b.rowFreeze)
 	dataRows := b.cont
 	if hasHeader {
@@ -342,6 +348,9 @@ func (b *Buffer) sortByNum(colIndex int, rev bool) {
 
 // sortByDate sorts column by date format with optimized date parsing
 func (b *Buffer) sortByDate(colIndex int, rev bool) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
 	hasHeader := I2B(b.rowFreeze)
 	dataRows := b.cont
 	if hasHeader {
