@@ -180,23 +180,33 @@ func wrapText(text string, maxWidth int) string {
 	return string(result)
 }
 
-// truncateText truncates text to maxWidth and adds ellipsis if needed
+// truncateText cuts text to maxWidth terminal cells and appends an ellipsis.
+// Width is measured in display cells, as tview draws it, so wide characters
+// count double and the visible result matches the limit.
 func truncateText(text string, maxWidth int) string {
-	if maxWidth <= 0 {
+	if maxWidth <= 0 || uniseg.StringWidth(text) <= maxWidth {
 		return text
 	}
-
-	runes := []rune(text)
-	if len(runes) <= maxWidth {
-		return text
-	}
-
-	// Reserve 3 characters for ellipsis
+	// Reserve 3 cells for the ellipsis
 	if maxWidth <= 3 {
-		return string(runes[:maxWidth])
+		return cutToWidth(text, maxWidth)
 	}
+	return cutToWidth(text, maxWidth-3) + "..."
+}
 
-	return string(runes[:maxWidth-3]) + "..."
+// cutToWidth returns the longest prefix of text, on grapheme boundaries,
+// whose display width does not exceed width.
+func cutToWidth(text string, width int) string {
+	used, end := 0, 0
+	gr := uniseg.NewGraphemes(text)
+	for gr.Next() {
+		if used+gr.Width() > width {
+			break
+		}
+		used += gr.Width()
+		_, end = gr.Positions()
+	}
+	return text[:end]
 }
 
 // getColumnMaxWidth determines the maximum width for a column

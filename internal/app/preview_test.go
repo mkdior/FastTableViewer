@@ -31,6 +31,22 @@ func TestPreviewLayout(t *testing.T) {
 	}
 }
 
+func TestTruncatedCellTextUsesDisplayWidth(t *testing.T) {
+	wide := strings.Repeat("日", 30) // 30 runes, 60 cells
+	buf, _ := createNewBufferWithData([][]string{{"h"}, {wide}}, true)
+	oldB, oldWrapped := b, wrappedColumns
+	defer func() { b, wrappedColumns = oldB, oldWrapped }()
+	b = buf
+	wrappedColumns = map[int]int{0: 50}
+	if _, ok := truncatedCellText(1, 0); !ok {
+		t.Error("a 60-cell value under a 50-cell limit is cut and must be previewed")
+	}
+	wrappedColumns = map[int]int{0: 60}
+	if _, ok := truncatedCellText(1, 0); ok {
+		t.Error("a value that fits its limit must not be previewed")
+	}
+}
+
 // screenText joins the simulation screen rows into one string.
 func screenText(s tcell.SimulationScreen) string {
 	cells, w, h := s.GetContents()

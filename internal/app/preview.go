@@ -111,7 +111,7 @@ func truncatedCellText(row, col int) (string, bool) {
 		return "", false
 	}
 	text := b.cont[row][col]
-	if utf8.RuneCountInString(text) <= width {
+	if uniseg.StringWidth(text) <= width {
 		return "", false
 	}
 	return text, true

@@ -1,7 +1,10 @@
 package app
 
 import (
+	"strings"
 	"testing"
+
+	"github.com/rivo/uniseg"
 )
 
 // ========================================
@@ -129,6 +132,24 @@ func TestTruncateText_ExactLength(t *testing.T) {
 	result := truncateText(text, 20)
 	if result != text {
 		t.Errorf("Text at exact length should not be truncated: got '%s', want '%s'", result, text)
+	}
+}
+
+func TestTruncateText_WideRunes(t *testing.T) {
+	// 30 CJK characters occupy 60 cells; the limit is in cells, not runes.
+	wide := strings.Repeat("日", 30)
+	got := truncateText(wide, 50)
+	if got == wide {
+		t.Fatal("wide text over the cell limit must be cut")
+	}
+	if !strings.HasSuffix(got, "...") {
+		t.Errorf("cut text must end with an ellipsis: %q", got)
+	}
+	if w := uniseg.StringWidth(got); w > 50 || w < 49 {
+		t.Errorf("cut text is %d cells wide, want 49 or 50", w)
+	}
+	if got := truncateText("e\u0301e\u0301e\u0301", 2); got != "e\u0301e\u0301" {
+		t.Errorf("cut must respect grapheme boundaries, got %q", got)
 	}
 }
 
