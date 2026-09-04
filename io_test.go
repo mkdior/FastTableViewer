@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
+	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -509,5 +512,41 @@ func TestLoadFileToBuffer_SkipLinesWithSeparatorGiven(t *testing.T) {
 	}
 	if args.SkipNum != 1 {
 		t.Errorf("loader must not mutate args.SkipNum, got %d", args.SkipNum)
+	}
+}
+
+func TestLoadFileToBufferAsync_PreservesRowOrder(t *testing.T) {
+	f, err := os.CreateTemp(t.TempDir(), "order-*.csv")
+	if err != nil {
+		t.Fatal(err)
+	}
+	w := bufio.NewWriter(f)
+	_, _ = w.WriteString("id,val\n")
+	const n = 50000
+	for i := 0; i < n; i++ {
+		_, _ = w.WriteString(strconv.Itoa(i) + ",x\n")
+	}
+	_ = w.Flush()
+	_ = f.Close()
+
+	args.setDefault()
+	b := createNewBuffer()
+	updateChan := make(chan bool, 10)
+	doneChan := make(chan error, 1)
+	go loadFileToBufferAsync(f.Name(), b, updateChan, doneChan)
+	go func() {
+		for range updateChan {
+		}
+	}()
+	if err := <-doneChan; err != nil {
+		t.Fatalf("loadFileToBufferAsync() error = %v", err)
+	}
+	if b.rowLen != n+1 {
+		t.Fatalf("rowLen = %d, want %d", b.rowLen, n+1)
+	}
+	for i := 1; i < b.rowLen; i++ {
+		if b.cont[i][0] != strconv.Itoa(i-1) {
+			t.Fatalf("row %d has id %q; async load must preserve file order", i, b.cont[i][0])
+		}
 	}
 }
