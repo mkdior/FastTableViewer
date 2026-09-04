@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 // ========================================
@@ -714,5 +715,46 @@ func TestIssue25_SemicolonAndTabFilesLoad(t *testing.T) {
 				t.Errorf("rowLen = %d, want %d", b.rowLen, strings.Count(tc.content, "\n"))
 			}
 		})
+	}
+}
+
+// The type detection that follows an async load runs in its own goroutine
+// while the UI already reads column types; both must go through the lock.
+// This test is meaningful under -race, which CI runs.
+func TestAsyncLoadColumnTypesAreSynchronised(t *testing.T) {
+	f, err := os.CreateTemp(t.TempDir(), "types-*.csv")
+	if err != nil {
+		t.Fatal(err)
+	}
+	w := bufio.NewWriter(f)
+	_, _ = w.WriteString("id,when,name\n")
+	for i := 0; i < 2000; i++ {
+		_, _ = w.WriteString(strconv.Itoa(i) + ",2024-01-0" + strconv.Itoa(i%9+1) + ",n" + strconv.Itoa(i%7) + "\n")
+	}
+	_ = w.Flush()
+	_ = f.Close()
+
+	args.setDefault()
+	b := createNewBuffer()
+	updateChan := make(chan bool, 10)
+	doneChan := make(chan error, 1)
+	go loadFileToBufferAsync(f.Name(), b, updateChan, doneChan)
+	go func() {
+		for range updateChan {
+		}
+	}()
+	if err := <-doneChan; err != nil {
+		t.Fatal(err)
+	}
+	// Read types while detection and interning are still running.
+	deadline := time.Now().Add(150 * time.Millisecond)
+	for time.Now().Before(deadline) {
+		_ = b.getColType(0)
+		_ = b.getColType(1)
+		_ = b.getColType(2)
+		_ = b.getCol(2)
+	}
+	if got := b.getColType(1); got != colTypeDate {
+		t.Errorf("column 1 type = %s, want Date", type2name(got))
 	}
 }

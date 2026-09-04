@@ -489,13 +489,23 @@ func (b *Buffer) getCol(i int) []string {
 	return result
 }
 
-// set ith column data type
+// setColType sets the data type of column i. It is called from the type
+// detection goroutine while the UI reads types, so it takes the lock.
 func (b *Buffer) setColType(i int, t int) {
-	b.colType[i] = t
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if i >= 0 && i < len(b.colType) {
+		b.colType[i] = t
+	}
 }
 
-// get ith column data type
+// getColType returns the data type of column i (string for unknown columns).
 func (b *Buffer) getColType(i int) int {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	if i < 0 || i >= len(b.colType) {
+		return colTypeStr
+	}
 	return b.colType[i]
 }
 
@@ -697,10 +707,14 @@ func isNumericValue(s string) bool {
 
 // detectAllColumnTypes automatically detects types for all columns in parallel
 func (b *Buffer) detectAllColumnTypes() {
-	types := make([]int, b.colLen)
+	b.mu.RLock()
+	colLen := b.colLen
+	b.mu.RUnlock()
+
+	types := make([]int, colLen)
 	var wg sync.WaitGroup
 
-	for i := 0; i < b.colLen; i++ {
+	for i := 0; i < colLen; i++ {
 		wg.Add(1)
 		go func(col int) {
 			defer wg.Done()
