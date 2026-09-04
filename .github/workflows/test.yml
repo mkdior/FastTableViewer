@@ -16,20 +16,4 @@ jobs:
           go-version: ${{ matrix.go }}
       - run: go vet ./...
       - run: test -z "$(gofmt -l .)"
-      - run: go test -race -coverprofile=profile.cov ./...
-
-      - name: Send coverage
-        uses: shogo82148/actions-goveralls@v1
-        with:
-          path-to-profile: profile.cov
-          flag-name: Go-${{ matrix.go }}
-          parallel: true
-
-  # notifies that all test jobs are finished.
-  finish:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: shogo82148/actions-goveralls@v1
-        with:
-          parallel-finished: true
+      - run: go test -race ./...
