@@ -105,17 +105,36 @@ const updateInterval = 500
 // separatorSampleLines is how many lines are read before the separator is inferred.
 const separatorSampleLines = 10
 
+// commonSeparators are the delimiters trusted enough to override a file suffix hint.
+var commonSeparators = []rune{',', '\t', '|', ';'}
+
 // detectSeparator infers the delimiter for the given source from its first lines.
-// File name suffixes .csv and .tsv take priority over content-based detection.
+// A .csv or .tsv suffix (also before .gz) is used when it fits the content, and
+// is only overridden when one of the common delimiters fits instead, so a
+// semicolon-delimited .csv is detected while exotic characters cannot hijack it.
 func detectSeparator(name string, lines []string) rune {
-	if strings.HasSuffix(name, ".csv") {
-		return ','
+	var hint rune
+	switch base := strings.TrimSuffix(name, ".gz"); {
+	case strings.HasSuffix(base, ".csv"):
+		hint = ','
+	case strings.HasSuffix(base, ".tsv"):
+		hint = '\t'
 	}
-	if strings.HasSuffix(name, ".tsv") {
-		return '\t'
-	}
+
 	sd := sepDetecor{}
-	return sd.sepDetect(lines)
+	if hint != 0 && sd.isValidSeparator(lines, hint) {
+		return hint
+	}
+	detected := sd.sepDetect(lines)
+	if hint == 0 {
+		return detected
+	}
+	for _, sep := range commonSeparators {
+		if detected == sep {
+			return detected
+		}
+	}
+	return hint
 }
 
 // loadToBuffer reads every row of src into b, honouring the skip/limit/column

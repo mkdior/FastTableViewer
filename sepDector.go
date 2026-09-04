@@ -21,7 +21,7 @@ func (sd *sepDetecor) sepDetect(s []string) rune {
 	}
 
 	// Fast path: Check common separators first (99% of cases)
-	commonSeps := []rune{',', '\t', '|', ';'}
+	commonSeps := commonSeparators
 	for _, sep := range commonSeps {
 		if sd.isValidSeparator(s, sep) {
 			return sep
@@ -29,7 +29,51 @@ func (sd *sepDetecor) sepDetect(s []string) rune {
 	}
 
 	// Fallback: Analyze all potential separators
-	return sd.detectBestSeparator(s)
+	if sep := sd.detectBestSeparator(s); sep != 0 {
+		return sep
+	}
+
+	// Ragged input: accept a common separator that appears on every line and
+	// yields the same field count on most of them.
+	return sd.detectMajoritySeparator(s, commonSeps)
+}
+
+// majorityShare is the fraction of sample lines that must agree on a field
+// count for detectMajoritySeparator to accept a separator.
+const majorityShare = 0.6
+
+// detectMajoritySeparator picks, among candidates present on every line, the
+// one whose modal field count covers the largest share of lines (>= majorityShare).
+// Earlier candidates win ties.
+func (sd *sepDetecor) detectMajoritySeparator(lines []string, candidates []rune) rune {
+	var best rune
+	bestShare := 0.0
+	for _, sep := range candidates {
+		counts := make(map[int]int)
+		present := true
+		for _, line := range lines {
+			c := countRuneFast(line, sep)
+			if c == 0 {
+				present = false
+				break
+			}
+			counts[c]++
+		}
+		if !present {
+			continue
+		}
+		modal := 0
+		for _, n := range counts {
+			if n > modal {
+				modal = n
+			}
+		}
+		share := float64(modal) / float64(len(lines))
+		if share >= majorityShare && share > bestShare {
+			best, bestShare = sep, share
+		}
+	}
+	return best
 }
 
 // Fast validation: Check if a separator is valid for all lines

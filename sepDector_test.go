@@ -283,3 +283,17 @@ func BenchmarkCountRuneFast(b *testing.B) {
 		countRuneFast(s, ',')
 	}
 }
+
+func TestSepDetect_RaggedRowsUseMajority(t *testing.T) {
+	sd := sepDetecor{}
+	lines := []string{
+		"A,B,C,D",
+		"1,2,3,4",
+		"5,6,7",
+		"8,9,10,11",
+		"12,13,14,15",
+	}
+	if sep := sd.sepDetect(lines); sep != ',' {
+		t.Errorf("ragged comma input: got %q, want ','", sep)
+	}
+}

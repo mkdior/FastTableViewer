@@ -634,3 +634,29 @@ func TestLoadFileToBuffer_ColumnsOnRaggedRows(t *testing.T) {
 		t.Errorf("short row projected to %q, want [5 NaN]", got)
 	}
 }
+
+func TestDetectSeparator(t *testing.T) {
+	tests := []struct {
+		name  string
+		file  string
+		lines []string
+		want  rune
+	}{
+		{"comma csv", "a.csv", []string{"a,b", "1,2"}, ','},
+		{"semicolon-delimited csv is detected", "eu.csv", []string{"a;b;c", "1,5;2,5;3", "4;5;6"}, ';'},
+		{"single-column csv keeps the suffix hint", "one.csv", []string{"a", "1", "2"}, ','},
+		{"quoted commas with a time column keep comma", "log.csv", []string{`t,msg`, `12:00,"a, b"`, `12:05,c`}, ','},
+		{"gzip csv uses the csv hint", "a.csv.gz", []string{"a", "1"}, ','},
+		{"tsv", "a.tsv", []string{"a\tb", "1\t2"}, '\t'},
+		{"unknown extension falls back to detection", "a.txt", []string{"a|b", "1|2"}, '|'},
+		{"pipe input with no name", "", []string{"a;b", "1;2"}, ';'},
+		{"undetectable", "a.txt", []string{"abc", "def"}, 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := detectSeparator(tt.file, tt.lines); got != tt.want {
+				t.Errorf("detectSeparator(%q) = %q, want %q", tt.file, got, tt.want)
+			}
+		})
+	}
+}
