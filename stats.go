@@ -45,7 +45,13 @@ type ContinuousStats struct {
 
 func (s *ContinuousStats) summary(a []string) {
 	originalCount := len(a)
-	data := stats.LoadRawData(a)
+	// Parse with the same rules as sorting and filtering so "1,234.5" counts as a number.
+	data := make(stats.Float64Data, 0, len(a))
+	for _, v := range a {
+		if f, ok := parseNumberStrict(v); ok {
+			data = append(data, f)
+		}
+	}
 	s.data = data
 	s.count = len(data)
 	s.missing = originalCount - s.count
@@ -236,9 +242,7 @@ func (s *DiscreteStats) summary(a []string) {
 			displayKey = "(empty)"
 		}
 		// Truncate very long values
-		if len(displayKey) > 40 {
-			displayKey = displayKey[:37] + "..."
-		}
+		displayKey = truncateText(displayKey, 40)
 
 		percent := float64(kv.Value) / float64(s.count) * 100
 		s.summaryData = append(s.summaryData, []string{

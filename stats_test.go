@@ -1,7 +1,9 @@
 package main
 
 import (
+	"strings"
 	"testing"
+	"unicode/utf8"
 )
 
 // ========================================
@@ -232,5 +234,29 @@ func TestDiscreteStats_GetPlot_EmptyData(t *testing.T) {
 
 	if plot != "No data to plot" {
 		t.Errorf("Expected 'No data to plot', got: %s", plot)
+	}
+}
+
+func TestContinuousStats_ThousandsSeparators(t *testing.T) {
+	cs := &ContinuousStats{}
+	cs.summary([]string{"1,000", "2,000", "3_000", "n/a"})
+	if cs.count != 3 || cs.missing != 1 {
+		t.Fatalf("count=%d missing=%d, want 3 valid and 1 missing", cs.count, cs.missing)
+	}
+	if cs.sum != 6000 {
+		t.Errorf("sum = %v, want 6000", cs.sum)
+	}
+}
+
+func TestDiscreteStats_TruncatesLongValuesByRune(t *testing.T) {
+	ds := &DiscreteStats{}
+	long := strings.Repeat("é", 60)
+	ds.summary([]string{long})
+	last := ds.getSummaryData()[len(ds.getSummaryData())-1]
+	if !utf8.ValidString(last[0]) {
+		t.Errorf("truncated key is not valid UTF-8: %q", last[0])
+	}
+	if got := len([]rune(last[0])); got != 40 {
+		t.Errorf("truncated key has %d runes, want 40", got)
 	}
 }
