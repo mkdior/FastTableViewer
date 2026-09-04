@@ -38,112 +38,121 @@ func buildFilterInfoStr(currentColumn int) string {
 	return fmt.Sprintf("🔎 %d filters active  |  Navigate to filtered column and press 'r' to remove", len(activeFilters))
 }
 
-// add buffer data to buffer table with optimized wrapped column lookup
-func drawBuffer(b *Buffer, t *tview.Table) {
+// searchMatchSet mirrors searchResults as a set so cell styling is O(1) per cell.
+var searchMatchSet map[SearchResult]struct{}
+
+// setSearchResults replaces the current search results and rebuilds the lookup set.
+func setSearchResults(results []SearchResult) {
+	searchResults = results
+	searchMatchSet = make(map[SearchResult]struct{}, len(results))
+	for _, r := range results {
+		searchMatchSet[r] = struct{}{}
+	}
+}
+
+// bufferContent adapts a Buffer to tview's TableContent so the table only
+// materialises the cells it actually draws. Header, frozen-column, filter and
+// search styling is applied per cell on demand.
+type bufferContent struct {
+	tview.TableContentReadOnly
+	b *Buffer
+}
+
+func (c *bufferContent) GetRowCount() int {
+	c.b.mu.RLock()
+	defer c.b.mu.RUnlock()
+	return c.b.rowLen
+}
+
+func (c *bufferContent) GetColumnCount() int {
+	c.b.mu.RLock()
+	defer c.b.mu.RUnlock()
+	return c.b.colLen
+}
+
+func (c *bufferContent) GetCell(r, col int) *tview.TableCell {
+	b := c.b
 	b.mu.RLock()
-	defer b.mu.RUnlock()
-
-	t.Clear()
-	cols, rows := b.colLen, b.rowLen
-
-	// Pre-compute wrapped column info to avoid repeated map lookups
-	type colInfo struct {
-		maxWidth      int
-		needsTruncate bool
+	if r < 0 || col < 0 || r >= b.rowLen || col >= b.colLen || col >= len(b.cont[r]) {
+		b.mu.RUnlock()
+		return nil
 	}
-	colInfos := make([]colInfo, cols)
-	for c := 0; c < cols; c++ {
-		if width, isWrapped := wrappedColumns[c]; isWrapped {
-			colInfos[c] = colInfo{maxWidth: width, needsTruncate: true}
+	cellText := b.cont[r][col]
+	rowFreeze, colFreeze := b.rowFreeze, b.colFreeze
+	b.mu.RUnlock()
+
+	color := tcell.ColorWhite
+	backgroundColor := tcell.ColorDefault
+	attributes := tcell.AttrNone
+	alignment := tview.AlignLeft
+
+	// Check if this is a header row/column (frozen area)
+	isHeaderRow := r < rowFreeze && args.Header != -1 && args.Header != 2
+	isHeaderCol := col < colFreeze
+
+	if isHeaderRow {
+		// Main header row: bold white text on deep blue background
+		color = tcell.ColorWhite
+		backgroundColor = tcell.NewRGBColor(30, 60, 120)
+		attributes = tcell.AttrBold | tcell.AttrUnderline
+		alignment = tview.AlignCenter
+
+		// Add filter indicator if this column has a filter applied
+		if isFiltered {
+			if _, hasFilter := activeFilters[col]; hasFilter {
+				cellText = "🔎 " + cellText + " 🔎"
+				backgroundColor = tcell.NewRGBColor(255, 100, 0) // Orange background for filtered column
+			}
 		}
+	} else if isHeaderCol {
+		// Frozen column: gold color for row headers
+		color = tcell.NewRGBColor(255, 215, 0)
+		attributes = tcell.AttrBold
 	}
 
-	for r := 0; r < rows; r++ {
-		for c := 0; c < cols; c++ {
-			color := tcell.ColorWhite
-			backgroundColor := tcell.ColorDefault
-			attributes := tcell.AttrNone
-			alignment := tview.AlignLeft
-
-			// Get cell content
-			cellText := b.cont[r][c]
-
-			// Check if this is a header row/column (frozen area)
-			isHeaderRow := r < b.rowFreeze && args.Header != -1 && args.Header != 2
-			isHeaderCol := c < b.colFreeze
-
-			// Modern header styling with rich visual design
-			if isHeaderRow {
-				// Main header row: bold white text on gradient blue background
-				color = tcell.ColorWhite
-				backgroundColor = tcell.NewRGBColor(30, 60, 120) // Deep blue
-				attributes = tcell.AttrBold | tcell.AttrUnderline
-				alignment = tview.AlignCenter
-
-				// Add filter indicator if this column has a filter applied
-				if isFiltered {
-					if _, hasFilter := activeFilters[c]; hasFilter {
-						cellText = "🔎 " + cellText + " 🔎"
-						backgroundColor = tcell.NewRGBColor(255, 100, 0) // Orange background for filtered column
-					}
-				}
-			} else if isHeaderCol {
-				// Frozen column: gold color for row headers
-				color = tcell.NewRGBColor(255, 215, 0) // Gold
+	// Search match highlighting overrides header styling
+	if searchQuery != "" {
+		if _, hit := searchMatchSet[SearchResult{Row: r, Col: col}]; hit {
+			if currentSearchIndex >= 0 && currentSearchIndex < len(searchResults) &&
+				searchResults[currentSearchIndex].Row == r &&
+				searchResults[currentSearchIndex].Col == col {
+				// Current match: vibrant cyan highlight
+				backgroundColor = tcell.NewRGBColor(0, 180, 216)
+				color = tcell.ColorBlack
 				attributes = tcell.AttrBold
+			} else {
+				// Other matches: soft purple highlight
+				backgroundColor = tcell.NewRGBColor(100, 100, 150)
+				color = tcell.ColorWhite
+				attributes = tcell.AttrNone
 			}
-
-			// Check if this cell is a search result and highlight it
-			isSearchMatch := false
-			if searchQuery != "" && len(searchResults) > 0 {
-				for _, result := range searchResults {
-					if result.Row == r && result.Col == c {
-						isSearchMatch = true
-						break
-					}
-				}
-			}
-
-			// Modern search match highlighting (overrides header styling)
-			if isSearchMatch {
-				// Check if this is the current search result
-				if currentSearchIndex >= 0 && currentSearchIndex < len(searchResults) &&
-					searchResults[currentSearchIndex].Row == r &&
-					searchResults[currentSearchIndex].Col == c {
-					// Current match: vibrant cyan highlight
-					backgroundColor = tcell.NewRGBColor(0, 180, 216)
-					color = tcell.ColorBlack
-					attributes = tcell.AttrBold
-				} else {
-					// Other matches: soft purple highlight
-					backgroundColor = tcell.NewRGBColor(100, 100, 150)
-					color = tcell.ColorWhite
-					attributes = tcell.AttrNone
-				}
-			}
-
-			// Use pre-computed column info for truncation
-			maxWidth := 0
-			if colInfos[c].needsTruncate {
-				maxWidth = colInfos[c].maxWidth
-				cellText = truncateText(cellText, maxWidth)
-			}
-
-			// Create cell with modern styling
-			cell := tview.NewTableCell(cellText).
-				SetTextColor(color).
-				SetBackgroundColor(backgroundColor).
-				SetAttributes(attributes).
-				SetAlign(alignment).
-				SetExpansion(1)
-
-			if maxWidth > 0 {
-				cell.SetMaxWidth(maxWidth)
-			}
-
-			t.SetCell(r, c, cell)
 		}
 	}
+
+	// Width-limited columns are truncated with an ellipsis
+	maxWidth := 0
+	if width, isLimited := wrappedColumns[col]; isLimited {
+		maxWidth = width
+		cellText = truncateText(cellText, maxWidth)
+	}
+
+	cell := tview.NewTableCell(cellText).
+		SetTextColor(color).
+		SetBackgroundColor(backgroundColor).
+		SetAttributes(attributes).
+		SetAlign(alignment).
+		SetExpansion(1)
+
+	if maxWidth > 0 {
+		cell.SetMaxWidth(maxWidth)
+	}
+	return cell
+}
+
+// drawBuffer points the table at b. Cells are produced lazily by bufferContent,
+// so this is cheap to call after every state change (load tick, sort, filter, search).
+func drawBuffer(b *Buffer, t *tview.Table) {
+	t.SetContent(&bufferContent{b: b})
 }
 
 // add stats data to stats table
@@ -414,7 +423,7 @@ func drawUI(b *Buffer) error {
 				if query != "" {
 					searchQuery = query
 					searchUseRegex = useRegex
-					searchResults = performSearch(b, query, useRegex, caseSensitive)
+					setSearchResults(performSearch(b, query, useRegex, caseSensitive))
 
 					if len(searchResults) > 0 {
 						currentSearchIndex = 0
@@ -538,7 +547,7 @@ func drawUI(b *Buffer) error {
 		if event.Key() == tcell.KeyEscape {
 			if searchQuery != "" {
 				searchQuery = ""
-				searchResults = []SearchResult{}
+				setSearchResults(nil)
 				currentSearchIndex = -1
 				drawBuffer(b, bufferTable)
 				drawFooterText(fileNameStr, "Search cleared", cursorPosStr)

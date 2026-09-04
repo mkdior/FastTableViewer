@@ -91,7 +91,7 @@ func initView() {
 	app.EnableMouse(true) // Enable mouse support
 	b = createNewBuffer()
 	wrappedColumns = make(map[int]int) // Initialize wrapped columns map
-	searchResults = []SearchResult{}
+	setSearchResults(nil)
 	currentSearchIndex = -1
 	searchQuery = ""
 	searchUseRegex = false
