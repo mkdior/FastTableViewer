@@ -20,60 +20,23 @@ func (sd *sepDetector) sepDetect(s []string) rune {
 		return 0
 	}
 
-	// Fast path: Check common separators first (99% of cases)
-	commonSeps := commonSeparators
-	for _, sep := range commonSeps {
-		if sd.isValidSeparator(s, sep) {
-			return sep
-		}
-	}
-
-	// Fallback: Analyze all potential separators
-	if sep := sd.detectBestSeparator(s); sep != 0 {
-		return sep
-	}
-
-	// Ragged input: accept a common separator that appears on every line and
-	// yields the same field count on most of them.
-	return sd.detectMajoritySeparator(s, commonSeps)
-}
-
-// majorityShare is the fraction of sample lines that must agree on a field
-// count for detectMajoritySeparator to accept a separator.
-const majorityShare = 0.6
-
-// detectMajoritySeparator picks, among candidates present on every line, the
-// one whose modal field count covers the largest share of lines (>= majorityShare).
-// Earlier candidates win ties.
-func (sd *sepDetector) detectMajoritySeparator(lines []string, candidates []rune) rune {
+	// Fast path: a common separator that yields the same number of fields on
+	// every line. When several do (a TSV whose one comma per line is a decimal
+	// mark), the one that yields the most fields is the delimiter.
 	var best rune
-	bestShare := 0.0
-	for _, sep := range candidates {
-		counts := make(map[int]int)
-		present := true
-		for _, line := range lines {
-			c := countRuneFast(line, sep)
-			if c == 0 {
-				present = false
-				break
+	bestCount := 0
+	for _, sep := range commonSeparators {
+		if sd.isValidSeparator(s, sep) {
+			if c := countRuneFast(s[0], sep); c > bestCount {
+				best, bestCount = sep, c
 			}
-			counts[c]++
-		}
-		if !present {
-			continue
-		}
-		modal := 0
-		for _, n := range counts {
-			if n > modal {
-				modal = n
-			}
-		}
-		share := float64(modal) / float64(len(lines))
-		if share >= majorityShare && share > bestShare {
-			best, bestShare = sep, share
 		}
 	}
-	return best
+	if best != 0 {
+		return best
+	}
+
+	return sd.detectBestSeparator(s)
 }
 
 // Fast validation: Check if a separator is valid for all lines
@@ -109,75 +72,69 @@ func countRuneFast(s string, r rune) int {
 	return count
 }
 
-// Analyze all potential separators when common ones don't work
+// minSeparatorPresence is the share of sample lines a delimiter must appear
+// on. Ragged files (columns pasted onto some lines, a stray note line) keep
+// their delimiter on nearly every line even when the field counts differ.
+const minSeparatorPresence = 0.8
+
+// detectBestSeparator scores every candidate that appears on nearly every
+// line. A delimiter produces many fields per line, so the average number of
+// occurrences carries most weight; agreement between lines on that number
+// adds up to half again; common delimiters are favoured and spaces
+// penalised. Ties fall back to the fixed priority of scoreSeparator.
 func (sd *sepDetector) detectBestSeparator(lines []string) rune {
 	if len(lines) == 0 {
 		return 0
 	}
 
-	// Build candidate list from first line
-	candidates := sd.getCandidates(lines[0])
-	if len(candidates) == 0 {
-		return 0
+	seen := make(map[rune]bool)
+	candidates := make([]rune, 0, 8)
+	for _, r := range append(append([]rune{}, commonSeparators...), sd.getCandidates(lines[0])...) {
+		if !seen[r] {
+			seen[r] = true
+			candidates = append(candidates, r)
+		}
 	}
 
-	// Score each candidate
-	type candidateScore struct {
-		sep   rune
-		score int
-		count int
-	}
-
-	var scored []candidateScore
-
+	var best rune
+	bestScore, bestPriority := 0.0, 0
+	n := float64(len(lines))
 	for _, sep := range candidates {
-		counts := make([]int, len(lines))
-		allEqual := true
-
-		// Count occurrences in each line
-		for i, line := range lines {
-			counts[i] = countRuneFast(line, sep)
-		}
-
-		// Check if all counts are equal and non-zero
-		firstCount := counts[0]
-		if firstCount == 0 {
-			continue
-		}
-
-		for i := 1; i < len(counts); i++ {
-			if counts[i] != firstCount {
-				allEqual = false
-				break
+		present, total := 0, 0
+		perCount := make(map[int]int)
+		for _, line := range lines {
+			c := countRuneFast(line, sep)
+			total += c
+			if c > 0 {
+				present++
+				perCount[c]++
 			}
 		}
-
-		if !allEqual {
+		if float64(present)/n < minSeparatorPresence {
 			continue
 		}
-
-		// Calculate score based on separator quality
-		score := sd.scoreSeparator(sep, firstCount)
-		scored = append(scored, candidateScore{
-			sep:   sep,
-			score: score,
-			count: firstCount,
-		})
-	}
-
-	// Return separator with highest score
-	if len(scored) == 0 {
-		return 0
-	}
-
-	best := scored[0]
-	for _, candidate := range scored[1:] {
-		if candidate.score > best.score {
-			best = candidate
+		modal, modalCount := 0, 0
+		for c, occurrences := range perCount {
+			if occurrences > modal || (occurrences == modal && c > modalCount) {
+				modal, modalCount = occurrences, c
+			}
+		}
+		consistency := float64(modal) / float64(present)
+		avg := float64(total) / n
+		weight := 1.0
+		switch sep {
+		case ',', '\t', '|', ';':
+			weight = 1.5
+		case ' ':
+			weight = 0.5
+		}
+		score := avg * (0.5 + 0.5*consistency) * weight
+		priority := sd.scoreSeparator(sep, modalCount)
+		if score > bestScore || (score == bestScore && priority > bestPriority) {
+			best, bestScore, bestPriority = sep, score, priority
 		}
 	}
-
-	return best.sep
+	return best
 }
 
 // Get candidate separators from first line

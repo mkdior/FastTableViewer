@@ -284,6 +284,29 @@ func BenchmarkCountRuneFast(b *testing.B) {
 	}
 }
 
+func TestSepDetect_RaggedAndCompetingCandidates(t *testing.T) {
+	sd := sepDetector{}
+	cases := []struct {
+		name  string
+		lines []string
+		want  rune
+	}{
+		{"ragged tabs, no two lines alike", []string{"a\tb", "1\t2\t3\t4", "5\t6", "7\t8\t9"}, '\t'},
+		{"one line without the delimiter", []string{"a\tb\tc", "note", "1\t2\t3", "4\t5\t6", "7\t8\t9"}, '\t'},
+		{"trailing tabs from pasting", []string{"a\tb\tc\t", "1\t2\t3", "4\t5\t6\t\t", "7\t8\t9"}, '\t'},
+		{"decimal comma once per line loses to tabs", []string{"id\tval\tname", "1\t1,5\tx", "2\t2,5\ty", "3\t3,5\tz"}, '\t'},
+		{"quoted commas with a time column keep comma", []string{"t,msg", "12:00,\"a, b\"", "12:05,c", "12:10,d"}, ','},
+		{"ragged commas", []string{"A,B,C,D", "1,2,3,4", "5,6,7", "8,9,10,11", "12,13,14,15"}, ','},
+		{"mixed delimiters on every line is undetectable", []string{"Name,Age,City", "Alice|30|NYC", "Bob\t25\tLA"}, 0},
+		{"space separated command output", []string{"USER PID %CPU COMMAND", "root 1 0.0 /sbin/init", "xcore 42 1.5 vim", "xcore 43 0.0 ftv"}, ' '},
+	}
+	for _, tc := range cases {
+		if got := sd.sepDetect(tc.lines); got != tc.want {
+			t.Errorf("%s: sepDetect = %q, want %q", tc.name, got, tc.want)
+		}
+	}
+}
+
 func TestSepDetect_RaggedRowsUseMajority(t *testing.T) {
 	sd := sepDetector{}
 	lines := []string{

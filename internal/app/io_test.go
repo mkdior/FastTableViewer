@@ -675,6 +675,10 @@ func TestIssue25_SemicolonAndTabFilesLoad(t *testing.T) {
 		{"semicolon forced with -s", ".txt", "a;b;c\n1;2;3\n4;5\n6;7;8\n", ';', ';'},
 		{"semicolon inside a .csv is detected", ".csv", "a;b;c\n1,5;2,5;3\n4;5;6\n", ';', 0},
 		{"tab with pasted extra columns", ".tsv", "a\tb\n1\t2\t3\t4\n5\t6\n7\t8\t9\n", '\t', 0},
+		{"tab with pasted extra columns and no extension", "", "a\tb\n1\t2\t3\t4\n5\t6\n7\t8\t9\n", '\t', 0},
+		{"tab file with a line lacking tabs", ".txt", "a\tb\tc\nnote\n1\t2\t3\n4\t5\t6\n7\t8\t9\n", '\t', 0},
+		{"tab file with trailing tabs from pasting", ".txt", "a\tb\tc\t\n1\t2\t3\n4\t5\t6\t\t\n7\t8\t9\n", '\t', 0},
+		{"tab file with decimal commas", ".txt", "id\tval\tname\n1\t1,5\tx\n2\t2,5\ty\n3\t3,5\tz\n", '\t', 0},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
