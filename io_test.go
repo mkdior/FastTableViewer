@@ -602,3 +602,14 @@ func TestLoadPipeToBuffer_LineTooLongIsReported(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
+
+func TestLineCSVParseFast_MultiByteSeparator(t *testing.T) {
+	got, err := lineCSVParseFast("a§b§c", '§')
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"a", "b", "c"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("lineCSVParseFast() = %q, want %q", got, want)
+	}
+}

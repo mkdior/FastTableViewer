@@ -429,36 +429,11 @@ func lineCSVParse(s string, sep rune) ([]string, error) {
 // Fast CSV parser for simple cases (no quotes, no escaping)
 // Falls back to standard parser if needed
 func lineCSVParseFast(s string, sep rune) ([]string, error) {
-	// Quick check if line contains quotes (needs full parser)
-	hasQuotes := false
-	for i := 0; i < len(s); i++ {
-		if s[i] == '"' {
-			hasQuotes = true
-			break
-		}
-	}
-
-	// Use fast path for simple CSV lines
-	if !hasQuotes {
-		// Count separators to pre-allocate slice
-		sepCount := 0
-		for i := 0; i < len(s); i++ {
-			if rune(s[i]) == sep {
-				sepCount++
-			}
-		}
-
-		result := make([]string, 0, sepCount+1)
-		start := 0
-		for i := 0; i < len(s); i++ {
-			if rune(s[i]) == sep {
-				result = append(result, s[start:i])
-				start = i + 1
-			}
-		}
-		// Add last field
-		result = append(result, s[start:])
-		return result, nil
+	// Lines without quotes cannot contain escaped separators, so a plain split
+	// is exact. strings.Split handles multi-byte separators, which a byte-wise
+	// comparison against the rune silently did not.
+	if strings.IndexByte(s, '"') < 0 {
+		return strings.Split(s, string(sep)), nil
 	}
 
 	// Fall back to standard parser for complex cases
