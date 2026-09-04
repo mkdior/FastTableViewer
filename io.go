@@ -101,6 +101,7 @@ type ParsedLine struct {
 // load file content to buffer (async version with concurrent parsing)
 func loadFileToBufferAsync(fn string, b *Buffer, updateChan chan<- bool, doneChan chan<- error) {
 	totalAddedLN := 0 //the number of lines has been added into buffer
+	skipRemaining := args.SkipNum //lines still to skip before reading data
 
 	// Get file size for progress tracking
 	fileInfo, err := os.Stat(fn)
@@ -139,8 +140,8 @@ func loadFileToBufferAsync(fn string, b *Buffer, updateChan chan<- bool, doneCha
 				continue
 			}
 			//ignore first n lines
-			if args.SkipNum > 0 {
-				args.SkipNum--
+			if skipRemaining > 0 {
+				skipRemaining--
 				continue
 			}
 			//ignore line with specified prefix
@@ -234,8 +235,8 @@ func loadFileToBufferAsync(fn string, b *Buffer, updateChan chan<- bool, doneCha
 				continue
 			}
 			//ignore first n lines
-			if args.SkipNum > 0 && args.NLine > 0 {
-				args.SkipNum--
+			if skipRemaining > 0 {
+				skipRemaining--
 				continue
 			}
 			//ignore line with specified prefix
@@ -323,6 +324,7 @@ func loadFileToBufferAsync(fn string, b *Buffer, updateChan chan<- bool, doneCha
 // load file content to buffer (synchronous version for small files or when preferred)
 func loadFileToBuffer(fn string, b *Buffer) error {
 	totalAddedLN := 0 //the number of lines has been added into buffer
+	skipRemaining := args.SkipNum //lines still to skip before reading data
 
 	// Get file size for progress tracking
 	fileInfo, err := os.Stat(fn)
@@ -354,8 +356,8 @@ func loadFileToBuffer(fn string, b *Buffer) error {
 				continue
 			}
 			//ignore first n lines
-			if args.SkipNum > 0 {
-				args.SkipNum--
+			if skipRemaining > 0 {
+				skipRemaining--
 				continue
 			}
 			//ignore line with specified prefix
@@ -407,8 +409,8 @@ func loadFileToBuffer(fn string, b *Buffer) error {
 			continue
 		}
 		//ignore first n lines
-		if args.SkipNum > 0 && args.NLine > 0 {
-			args.SkipNum--
+		if skipRemaining > 0 {
+			skipRemaining--
 			continue
 		}
 		//ignore line with specified prefix
@@ -442,6 +444,7 @@ func loadFileToBuffer(fn string, b *Buffer) error {
 // load console pipe content to buffer (async version for progressive rendering)
 func loadPipeToBufferAsync(stdin io.Reader, b *Buffer, updateChan chan<- bool, doneChan chan<- error) {
 	totalAddedLN := 0 //the number of lines has been added into buffer
+	skipRemaining := args.SkipNum //lines still to skip before reading data
 	var err error
 
 	// For pipes, we don't know the total size
@@ -468,8 +471,8 @@ func loadPipeToBufferAsync(stdin io.Reader, b *Buffer, updateChan chan<- bool, d
 				continue
 			}
 			//ignore first n lines
-			if args.SkipNum > 0 {
-				args.SkipNum--
+			if skipRemaining > 0 {
+				skipRemaining--
 				continue
 			}
 			//ignore line with specified prefix
@@ -551,8 +554,8 @@ func loadPipeToBufferAsync(stdin io.Reader, b *Buffer, updateChan chan<- bool, d
 			if line == "" {
 				continue
 			}
-			if args.SkipNum > 0 {
-				args.SkipNum--
+			if skipRemaining > 0 {
+				skipRemaining--
 				continue
 			}
 			if skipLine(line, args.SkipSymbol) {
@@ -633,6 +636,7 @@ func loadPipeToBufferAsync(stdin io.Reader, b *Buffer, updateChan chan<- bool, d
 // load console pipe content to buffer (synchronous version)
 func loadPipeToBuffer(stdin io.Reader, b *Buffer) error {
 	totalAddedLN := 0 //the number of lines has been added into buffer
+	skipRemaining := args.SkipNum //lines still to skip before reading data
 	var err error
 
 	// Create progress tracker (no file size for pipes)
@@ -654,8 +658,8 @@ func loadPipeToBuffer(stdin io.Reader, b *Buffer) error {
 				continue
 			}
 			//ignore first n lines
-			if args.SkipNum > 0 {
-				args.SkipNum--
+			if skipRemaining > 0 {
+				skipRemaining--
 				continue
 			}
 			//ignore line with specified prefix
@@ -696,8 +700,8 @@ func loadPipeToBuffer(stdin io.Reader, b *Buffer) error {
 			continue
 		}
 		//ignore first n lines
-		if args.SkipNum > 0 {
-			args.SkipNum--
+		if skipRemaining > 0 {
+			skipRemaining--
 			continue
 		}
 		//ignore line with specified prefix

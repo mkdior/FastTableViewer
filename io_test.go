@@ -489,3 +489,25 @@ func TestLoadPipeToBuffer_BlankLines(t *testing.T) {
 		t.Errorf("colLen = %d, want 2", b.colLen)
 	}
 }
+
+func TestLoadFileToBuffer_SkipLinesWithSeparatorGiven(t *testing.T) {
+	args.setDefault()
+	args.SkipNum = 1
+	defer args.setDefault()
+
+	b := createNewBuffer()
+	b.sep = ','
+	if err := loadFileToBuffer("./data/test/test.csv", b); err != nil {
+		t.Fatalf("loadFileToBuffer() error = %v", err)
+	}
+	// test.csv has a header and three data rows; skipping one line drops the header.
+	if b.rowLen != 3 {
+		t.Fatalf("rowLen = %d, want 3 (one line skipped)", b.rowLen)
+	}
+	if b.cont[0][0] != "Alice" {
+		t.Errorf("first row = %q, want Alice (header skipped)", b.cont[0][0])
+	}
+	if args.SkipNum != 1 {
+		t.Errorf("loader must not mutate args.SkipNum, got %d", args.SkipNum)
+	}
+}
