@@ -7,7 +7,7 @@
 [![GitHub release](https://img.shields.io/github/release/mkdior/FastTableViewer.svg)](https://github.com/mkdior/FastTableViewer/releases)
 
 <p align="center">
-   <img src="data/icon_transparent.png"  style="width:200px;" alt="ftv icon"/>
+   <img src="assets/icon_transparent.png"  style="width:200px;" alt="ftv icon"/>
 </p>
 
 ftv was created by Xiuqiang (Stephen) Chen
