@@ -202,6 +202,15 @@ func takeCount() (raw, count int) {
 	return raw, raw
 }
 
+// wrapCol maps a column index onto [0, n) so horizontal motion wraps around
+// the table: h at the first column lands on the last, l at the last on the first.
+func wrapCol(col, n int) int {
+	if n <= 0 {
+		return 0
+	}
+	return ((col % n) + n) % n
+}
+
 // clampInt limits v to [lo, hi]; hi below lo yields lo.
 func clampInt(v, lo, hi int) int {
 	if v > hi {
@@ -379,20 +388,20 @@ func drawUI(b *Buffer) error {
 			// even when the selection-changed throttle skips this update.
 			defer drawFooterText(fileNameStr, statusMessage, cursorPosStr)
 		}
-		firstRow, lastRow, lastCol := firstDataRow(b), b.rowLen-1, b.colLen-1
+		firstRow, lastRow, numCols := firstDataRow(b), b.rowLen-1, b.colLen
 
-		// Vim-like navigation
-		// h - move left
-		if event.Key() == tcell.KeyRune && event.Rune() == 'h' {
+		// Vim-like navigation. Horizontal motions wrap around the table edges.
+		// h / Left - move left
+		if event.Key() == tcell.KeyLeft || (event.Key() == tcell.KeyRune && event.Rune() == 'h') {
 			row, col := bufferTable.GetSelection()
-			bufferTable.Select(row, clampInt(col-count, 0, lastCol))
+			bufferTable.Select(row, wrapCol(col-count, numCols))
 			return nil
 		}
 
-		// l - move right
-		if event.Key() == tcell.KeyRune && event.Rune() == 'l' {
+		// l / Right - move right
+		if event.Key() == tcell.KeyRight || (event.Key() == tcell.KeyRune && event.Rune() == 'l') {
 			row, col := bufferTable.GetSelection()
-			bufferTable.Select(row, clampInt(col+count, 0, lastCol))
+			bufferTable.Select(row, wrapCol(col+count, numCols))
 			return nil
 		}
 
@@ -475,14 +484,14 @@ func drawUI(b *Buffer) error {
 		// w - move to next column (word forward)
 		if event.Key() == tcell.KeyRune && event.Rune() == 'w' {
 			row, col := bufferTable.GetSelection()
-			bufferTable.Select(row, clampInt(col+count, 0, lastCol))
+			bufferTable.Select(row, wrapCol(col+count, numCols))
 			return nil
 		}
 
 		// b - move to previous column (word backward)
 		if event.Key() == tcell.KeyRune && event.Rune() == 'b' {
 			row, col := bufferTable.GetSelection()
-			bufferTable.Select(row, clampInt(col-count, 0, lastCol))
+			bufferTable.Select(row, wrapCol(col-count, numCols))
 			return nil
 		}
 

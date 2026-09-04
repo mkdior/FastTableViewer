@@ -76,8 +76,8 @@ func getHelpContent() string {
   [` + theme.tag(theme.Accent) + `]Esc[-]                 Close dialog or clear search
 
 [::b][` + theme.tag(theme.Text) + `]⬆️ Movement[-:-:-]
-  [` + theme.tag(theme.Accent) + `]h[-]                   Move left ⬅️
-  [` + theme.tag(theme.Accent) + `]l[-]                   Move right ➡️
+  [` + theme.tag(theme.Accent) + `]h[-]                   Move left (wraps to the last column)
+  [` + theme.tag(theme.Accent) + `]l[-]                   Move right (wraps to the first column)
   [` + theme.tag(theme.Accent) + `]j[-]                   Move down ⬇️
   [` + theme.tag(theme.Accent) + `]k[-]                   Move up ⬆️
 

@@ -88,3 +88,14 @@ func TestClampRow_NeverSelectsHeader(t *testing.T) {
 		t.Errorf("without a header row 0 is selectable, got %d", got)
 	}
 }
+
+func TestWrapCol(t *testing.T) {
+	tests := []struct{ col, n, want int }{
+		{-1, 4, 3}, {4, 4, 0}, {2, 4, 2}, {-5, 4, 3}, {9, 4, 1}, {0, 0, 0},
+	}
+	for _, tt := range tests {
+		if got := wrapCol(tt.col, tt.n); got != tt.want {
+			t.Errorf("wrapCol(%d, %d) = %d, want %d", tt.col, tt.n, got, tt.want)
+		}
+	}
+}

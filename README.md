@@ -218,8 +218,8 @@ Short: `-h`, `-v`
 
 ### Movement
 
-h, Left: move left
-l, Right: move right
+h, Left: move left; wraps to the last column from the first
+l, Right: move right; wraps to the first column from the last
 j, Down: move down
 k, Up: move up
 w: next column
