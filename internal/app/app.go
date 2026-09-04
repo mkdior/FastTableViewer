@@ -181,7 +181,21 @@ func Execute(version string) {
 				b.sep = []rune(args.Sep)[0]
 			}
 
-			if err := setTheme(args.Theme); err != nil {
+			if args.DumpConfig {
+				stopView()
+				fatalError(dumpConfig(os.Stdout))
+				return
+			}
+
+			configPath, explicit := defaultConfigPath(), false
+			if args.ConfigPath != "" {
+				configPath, explicit = args.ConfigPath, true
+			}
+			cfg, err := loadConfig(configPath, explicit)
+			if err == nil {
+				err = applyConfig(cfg, args.Theme)
+			}
+			if err != nil {
 				stopView()
 				fatalError(err)
 			}
@@ -260,7 +274,9 @@ func Execute(version string) {
 	RootCmd.Flags().BoolVar(&args.Strict, "strict", false, "Strict mode: fail on missing/inconsistent data")
 	RootCmd.Flags().BoolVar(&args.AsyncLoad, "async", true, "Progressive rendering while loading")
 	RootCmd.Flags().IntVarP(&args.MemoryMB, "memory", "m", 0, "Memory limit in MB (0=unlimited/default, >0=set limit)")
-	RootCmd.Flags().StringVar(&args.Theme, "theme", defaultThemeName, "Colour scheme: "+strings.Join(themeNames(), ", "))
+	RootCmd.Flags().StringVar(&args.Theme, "theme", "", "Colour scheme: "+strings.Join(themeNames(), ", ")+" (default from config, else "+defaultThemeName+")")
+	RootCmd.Flags().StringVar(&args.ConfigPath, "config", "", "Config file (default ~/.config/ftv/config.toml)")
+	RootCmd.Flags().BoolVar(&args.DumpConfig, "dump-config", false, "Print the default config file and exit")
 	RootCmd.Flags().SortFlags = false
 	err := RootCmd.Execute()
 	fatalError(err)

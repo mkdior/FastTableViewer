@@ -206,15 +206,31 @@ Effect: stop loading when the estimated memory use reaches the limit; the rows
 ### --theme
 
 Argument: name of a built-in colour scheme
-Default: `subcore`
+Default: the `name` in the config file, else `subcore`
 Effect: selects the colours the table, footer and dialogs use; the list of
     schemes is shown in `--help`
+
+### --config
+
+Argument: path to a config file
+Default: `~/.config/ftv/config.toml` (`$XDG_CONFIG_HOME/ftv/config.toml`)
+Effect: loads key bindings and colours; a missing default file is ignored, a
+    missing named file is an error
+
+### --dump-config
+
+Effect: prints the default configuration with comments and exits; save it as
+    the config file and edit
 
 ### --help, --version
 
 Short: `-h`, `-v`
 
 ## Key Bindings
+
+The bindings below are the defaults. Every one of them can be changed in the
+config file; see [Configuration](#configuration). The help dialog (`?`) always
+shows the bindings that are active.
 
 ### Movement
 
@@ -386,6 +402,56 @@ cat data.json | jq -r '.[] | [.id, .name, .value] | @csv' | ftv
 ftv data.txt -s ";"                            # semicolon-delimited
 ```
 
+## Configuration
+
+ftv reads `~/.config/ftv/config.toml` if it exists (or the file named with
+`--config`). `ftv --dump-config` prints the defaults with comments; save that
+output as the config file and edit what you want to change.
+
+### [keys]
+
+One line per action, `action = key` or `action = [key, key]`. An empty list
+unbinds the action. Digits are reserved for count prefixes and cannot be
+bound, except `0` which is the default for `first_column`.
+
+Key spellings: a single character such as `h`, `G` or `$`; a name from `esc`,
+    `enter`, `tab`, `space`, `left`, `right`, `up`, `down`, `home`, `end`,
+    `pgup`, `pgdn`, `f1` to `f12`; a modifier form such as `ctrl+d`, `alt+x`
+    or `shift+v`
+Sequences: a quoted string with spaces is a multi-key chord, for example
+    `first_row = "g g"`
+Validation: a key bound to two actions, or a chord that is a prefix of
+    another, is rejected at startup with a message naming both actions
+Actions: `move_left`, `move_right`, `move_down`, `move_up`, `next_column`,
+    `prev_column`, `first_row`, `last_row`, `first_column`, `last_column`,
+    `half_page_down`, `half_page_up`, `search`, `next_match`, `prev_match`,
+    `cancel`, `filter`, `remove_filter`, `sort_asc`, `sort_desc`,
+    `toggle_type`, `toggle_width`, `stats`, `help`, `quit`
+
+```toml
+[keys]
+move_left  = ["h", "left"]
+first_row  = "g g"
+quit       = ["q", "ctrl+c"]
+stats      = []          # unbound
+```
+
+### [theme]
+
+`name` picks the built-in scheme to start from; each other entry overrides
+one colour role. Colours are `colour<n>` (an xterm-256 palette index, as in
+tmux), `#rrggbb`, or a name such as `red`.
+
+Roles: `background`, `text`, `dim`, `panel`, `stripe`, `border`, `accent`,
+    `alert`, `selection`
+
+```toml
+[theme]
+name       = "subcore"
+accent     = "colour208"
+alert      = "#ff5f5f"
+```
+
 ## Large Files
 
 ftv keeps every cell in memory. A file of a few hundred MB works well; a
@@ -418,9 +484,9 @@ whenever a `v*` tag is pushed. The release notes are the output of
 
 Every colour the UI uses comes from one `Theme` value in
 `internal/app/theme.go`, keyed by role (background, text, accent, alert and
-so on). To add a scheme, add an entry to `builtinThemes`; it becomes
-selectable with `--theme <name>`. Colours may be xterm-256 palette indices,
-named colours or true colour.
+so on). To add a built-in scheme, add an entry to `builtinThemes`; it becomes
+selectable with `--theme <name>`. Users can override any role, or the whole
+scheme, in the `[theme]` section of the config file without touching code.
 
 ### Layout
 

@@ -14,6 +14,8 @@ type Args struct {
 	AsyncLoad  bool     // enable async loading for progressive rendering
 	MemoryMB   int      // Memory limit in MB (0 = unlimited/default, >0 = custom limit)
 	Theme      string   // name of the colour scheme (see builtinThemes)
+	ConfigPath string   // config file; empty means the default location
+	DumpConfig bool     // print the default config and exit
 }
 
 func (args *Args) setDefault() {
@@ -27,5 +29,7 @@ func (args *Args) setDefault() {
 	args.Strict = false
 	args.AsyncLoad = true // default to async loading
 	args.MemoryMB = 0     // Unlimited by default
-	args.Theme = defaultThemeName
+	args.Theme = ""
+	args.ConfigPath = ""
+	args.DumpConfig = false
 }
