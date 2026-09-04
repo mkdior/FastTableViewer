@@ -107,6 +107,12 @@ func TestLoadFileToBuffer_TSV(t *testing.T) {
 	if b.sep != '\t' {
 		t.Errorf("Expected tab separator, got %q", b.sep)
 	}
+	if b.colLen != 4 || b.rowLen != 4 {
+		t.Errorf("tab_separated.tsv should load as 4x4, got %d rows x %d cols", b.rowLen, b.colLen)
+	}
+	if got := b.cont[1][2]; got != "New York" {
+		t.Errorf("cell (1,2) = %q, want \"New York\"", got)
+	}
 }
 
 func TestLoadFileToBuffer_EdgeCases(t *testing.T) {
