@@ -223,6 +223,13 @@ func loadToBuffer(src loadSource, b *Buffer, updateChan chan<- bool, showProgres
 		}
 	}
 
+	if err := src.scanner.Err(); err != nil {
+		if errors.Is(err, bufio.ErrTooLong) {
+			return fmt.Errorf("line %d exceeds the %d byte line limit", totalAddedLN+args.SkipNum+1, maxScanTokenSize)
+		}
+		return err
+	}
+
 	loadProgress.IsComplete = true
 
 	if updateChan != nil {
@@ -254,11 +261,13 @@ func openFileSource(fn string) (loadSource, error) {
 	return loadSource{name: fn, scanner: scanner, totalSize: fileSize}, nil
 }
 
+// maxScanTokenSize is the longest single line the loaders accept (bufio default is 64KB).
+const maxScanTokenSize = 1024 * 1024
+
 // readerSource prepares a loadSource for an arbitrary reader such as stdin.
 func readerSource(r io.Reader) loadSource {
 	scanner := bufio.NewScanner(r)
 	//increase buffer size for large files and long lines
-	const maxScanTokenSize = 1024 * 1024
 	buf := make([]byte, maxScanTokenSize)
 	scanner.Buffer(buf, maxScanTokenSize)
 	return loadSource{scanner: scanner}
@@ -334,7 +343,6 @@ func getFileScanner(fn string) (*bufio.Scanner, error) {
 
 	//increase buffer size for large files and long lines
 	//default is 64KB, we set to 1MB for better performance
-	const maxScanTokenSize = 1024 * 1024
 	buf := make([]byte, maxScanTokenSize)
 	scanner.Buffer(buf, maxScanTokenSize)
 

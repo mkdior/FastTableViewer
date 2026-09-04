@@ -585,3 +585,20 @@ func TestLoadFileToBufferAsync_SeparatorGivenSignalsWithRows(t *testing.T) {
 		t.Errorf("rows=%d cols=%d, want 4x4", b.rowLen, b.colLen)
 	}
 }
+
+func TestLoadPipeToBuffer_LineTooLongIsReported(t *testing.T) {
+	args.setDefault()
+	var buf bytes.Buffer
+	buf.WriteString("a,b\n1,2\n")
+	buf.WriteString(strings.Repeat("x", maxScanTokenSize+10) + ",3\n")
+	buf.WriteString("4,5\n")
+
+	b := createNewBuffer()
+	err := loadPipeToBuffer(&buf, b)
+	if err == nil {
+		t.Fatalf("expected an error for a line over %d bytes, got nil (rows silently truncated to %d)", maxScanTokenSize, b.rowLen)
+	}
+	if !strings.Contains(err.Error(), "line limit") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
