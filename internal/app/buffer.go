@@ -411,24 +411,32 @@ func parseNumericValueFast(s string) float64 {
 	return val
 }
 
-// parseDateValueFast quickly parses a date string to unix timestamp
-// Returns 0 for invalid dates with fast pre-checks
+// parseDateValueFast parses a date string to a unix timestamp for sorting,
+// returning 0 for values that are not dates. Use parseDate where the
+// difference between the epoch and an invalid value matters.
 func parseDateValueFast(s string) int64 {
+	ts, _ := parseDate(s)
+	return ts
+}
+
+// parseDate parses a date string in one of the supported formats and reports
+// whether it was a date at all, so 1970-01-01 (timestamp 0) stays valid.
+func parseDate(s string) (int64, bool) {
 	s = strings.TrimSpace(s)
 
 	// Fast rejection checks
 	if s == "" || s == "NA" || s == "N/A" || s == "null" {
-		return 0
+		return 0, false
 	}
 
 	// Dates are typically 8-30 characters
 	if len(s) < 8 || len(s) > 30 {
-		return 0
+		return 0, false
 	}
 
 	// Must contain date separators
 	if !strings.ContainsAny(s, "-/.:T ") {
-		return 0
+		return 0, false
 	}
 
 	// Must contain at least one digit
@@ -440,7 +448,7 @@ func parseDateValueFast(s string) int64 {
 		}
 	}
 	if !hasDigit {
-		return 0
+		return 0, false
 	}
 
 	// Try common date formats (most common first for performance)
@@ -461,11 +469,11 @@ func parseDateValueFast(s string) int64 {
 
 	for _, format := range formats {
 		if t, err := time.Parse(format, s); err == nil {
-			return t.Unix()
+			return t.Unix(), true
 		}
 	}
 
-	return 0
+	return 0, false
 }
 
 // getCol returns the ith column data as a string slice
@@ -880,8 +888,8 @@ func compileFilter(options FilterOptions, colType int) compiledFilter {
 	case numericOperators[f.operator]:
 		if colType == colTypeDate {
 			f.asDate = true
-			f.threshold = float64(parseDateValueFast(options.Query))
-			f.valid = f.threshold != 0
+			ts, ok := parseDate(options.Query)
+			f.threshold, f.valid = float64(ts), ok
 		} else {
 			f.threshold, f.valid = parseNumberStrict(options.Query)
 		}
@@ -909,9 +917,11 @@ func (f *compiledFilter) match(cellValue string) bool {
 	if numericOperators[f.operator] {
 		var v float64
 		if f.asDate {
-			if v = float64(parseDateValueFast(cellValue)); v == 0 {
+			ts, ok := parseDate(cellValue)
+			if !ok {
 				return false
 			}
+			v = float64(ts)
 		} else {
 			var ok bool
 			if v, ok = parseNumberStrict(cellValue); !ok {

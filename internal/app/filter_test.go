@@ -214,6 +214,9 @@ func TestEvaluateFilter_Operators(t *testing.T) {
 		{"numeric with non-numeric threshold never matches", "5", FilterOptions{Query: "abc", Operator: "<"}, colTypeFloat, false},
 		{"date column compares chronologically", "2024-03-01", FilterOptions{Query: "2024-01-15", Operator: ">"}, colTypeDate, true},
 		{"date column excludes unparseable cells", "unknown", FilterOptions{Query: "2024-01-15", Operator: ">"}, colTypeDate, false},
+		{"the unix epoch is a valid date threshold", "2024-01-15", FilterOptions{Query: "1970-01-01", Operator: ">"}, colTypeDate, true},
+		{"the unix epoch is a valid date cell", "1970-01-01", FilterOptions{Query: "1969-12-31", Operator: ">="}, colTypeDate, true},
+		{"the unix epoch is not confused with an invalid date", "1970-01-01", FilterOptions{Query: "2024-01-15", Operator: ">"}, colTypeDate, false},
 		{"empty operator defaults to contains", "Hello World", FilterOptions{Query: "world"}, colTypeStr, true},
 	}
 	for _, tt := range tests {
