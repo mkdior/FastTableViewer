@@ -171,3 +171,83 @@ func TestPagingActions(t *testing.T) {
 		t.Errorf("Home should go to the first data row, got %d", row)
 	}
 }
+
+// The keymap refactor rewrote these handlers; drive them through the key
+// handler exactly as a user would.
+func TestRewrittenHandlersThroughKeys(t *testing.T) {
+	setupVisualTable(t)
+	oldQuery, oldResults, oldIdx, oldWrapped := searchQuery, searchResults, currentSearchIndex, wrappedColumns
+	t.Cleanup(func() {
+		searchQuery, currentSearchIndex, wrappedColumns = oldQuery, oldIdx, oldWrapped
+		setSearchResults(oldResults)
+	})
+	wrappedColumns = map[int]int{}
+
+	// counts and column motions
+	press(t, "3 j")
+	if row, _ := bufferTable.GetSelection(); row != 4 {
+		t.Errorf("3j from row 1 should reach row 4, got %d", row)
+	}
+	press(t, "$")
+	if _, col := bufferTable.GetSelection(); col != 3 {
+		t.Errorf("$ should go to the last column, got %d", col)
+	}
+	press(t, "0")
+	if _, col := bufferTable.GetSelection(); col != 0 {
+		t.Errorf("0 should go to the first column, got %d", col)
+	}
+	press(t, "2 k")
+	if row, _ := bufferTable.GetSelection(); row != 2 {
+		t.Errorf("2k from row 4 should reach row 2, got %d", row)
+	}
+
+	// search navigation with wrap-around and counts
+	searchQuery = "x"
+	setSearchResults([]SearchResult{{Row: 1, Col: 1}, {Row: 2, Col: 2}, {Row: 4, Col: 3}})
+	currentSearchIndex = 0
+	press(t, "n")
+	if r, c := bufferTable.GetSelection(); currentSearchIndex != 1 || r != 2 || c != 2 {
+		t.Errorf("n should select the second match, got index %d at %d,%d", currentSearchIndex, r, c)
+	}
+	press(t, "2 n") // wraps past the end back to the first match
+	if r, c := bufferTable.GetSelection(); currentSearchIndex != 0 || r != 1 || c != 1 {
+		t.Errorf("2n should wrap to the first match, got index %d at %d,%d", currentSearchIndex, r, c)
+	}
+	press(t, "N")
+	if r, c := bufferTable.GetSelection(); currentSearchIndex != 2 || r != 4 || c != 3 {
+		t.Errorf("N from the first match should wrap to the last, got index %d at %d,%d", currentSearchIndex, r, c)
+	}
+	press(t, "esc")
+	if searchQuery != "" || len(searchResults) != 0 {
+		t.Error("Esc must clear the search")
+	}
+
+	// width limit toggle on the current column (the search left the cursor in
+	// the last column, so l wraps around to column 0)
+	press(t, "l")
+	_, col := bufferTable.GetSelection()
+	if col != 0 {
+		t.Fatalf("l from the last column should wrap to column 0, got %d", col)
+	}
+	press(t, "W")
+	if _, limited := wrappedColumns[col]; !limited {
+		t.Error("W must add a width limit on the current column")
+	}
+	press(t, "W")
+	if _, limited := wrappedColumns[col]; limited {
+		t.Error("W again must remove the width limit")
+	}
+
+	// type toggle cycles String -> Number -> Date -> String
+	if got := b.getColType(col); got != colTypeStr {
+		t.Fatalf("precondition: column %d should be Str, got %s", col, type2name(got))
+	}
+	press(t, "t")
+	if got := b.getColType(col); got != colTypeFloat {
+		t.Errorf("t should switch to Number, got %s", type2name(got))
+	}
+	press(t, "t t")
+	if got := b.getColType(col); got != colTypeStr {
+		t.Errorf("t twice more should return to String, got %s", type2name(got))
+	}
+}
