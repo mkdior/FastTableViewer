@@ -4,7 +4,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
@@ -116,9 +115,9 @@ func updateFooterWithStatus(status string) {
 	if mainPage != nil {
 		// Update the footer by rebuilding it
 		mainPage.Clear()
-		mainPage.AddText(fileNameStr, false, tview.AlignLeft, tcell.ColorDarkOrange).
-			AddText(status, false, tview.AlignCenter, tcell.ColorDarkOrange).
-			AddText(cursorPosStr, false, tview.AlignRight, tcell.ColorDarkOrange)
+		mainPage.AddText(fileNameStr, false, tview.AlignLeft, colAccent).
+			AddText(status, false, tview.AlignCenter, colText).
+			AddText(cursorPosStr, false, tview.AlignRight, colDim)
 	}
 }
 

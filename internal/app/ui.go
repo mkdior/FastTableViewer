@@ -81,8 +81,8 @@ func (c *bufferContent) GetCell(r, col int) *tview.TableCell {
 	rowFreeze, colFreeze := b.rowFreeze, b.colFreeze
 	b.mu.RUnlock()
 
-	color := tcell.ColorWhite
-	backgroundColor := tcell.ColorDefault
+	color := colText
+	backgroundColor := colBg
 	attributes := tcell.AttrNone
 	alignment := tview.AlignLeft
 
@@ -91,22 +91,23 @@ func (c *bufferContent) GetCell(r, col int) *tview.TableCell {
 	isHeaderCol := col < colFreeze
 
 	if isHeaderRow {
-		// Main header row: bold white text on deep blue background
-		color = tcell.ColorWhite
-		backgroundColor = tcell.NewRGBColor(30, 60, 120)
-		attributes = tcell.AttrBold | tcell.AttrUnderline
+		// Header row: a raised panel, like tmux's mode-style background
+		color = colText
+		backgroundColor = colPanel
+		attributes = tcell.AttrBold
 		alignment = tview.AlignCenter
 
 		// Add filter indicator if this column has a filter applied
 		if isFiltered {
 			if _, hasFilter := activeFilters[col]; hasFilter {
 				cellText = "🔎 " + cellText + " 🔎"
-				backgroundColor = tcell.NewRGBColor(255, 100, 0) // Orange background for filtered column
+				backgroundColor = colAlert
+				color = colBg
 			}
 		}
 	} else if isHeaderCol {
-		// Frozen column: gold color for row headers
-		color = tcell.NewRGBColor(255, 215, 0)
+		// Frozen column: accent text, like the current window in tmux
+		color = colAccent
 		attributes = tcell.AttrBold
 	}
 
@@ -116,14 +117,13 @@ func (c *bufferContent) GetCell(r, col int) *tview.TableCell {
 			if currentSearchIndex >= 0 && currentSearchIndex < len(searchResults) &&
 				searchResults[currentSearchIndex].Row == r &&
 				searchResults[currentSearchIndex].Col == col {
-				// Current match: vibrant cyan highlight
-				backgroundColor = tcell.NewRGBColor(0, 180, 216)
-				color = tcell.ColorBlack
+				// Current match (also the selected cell): accent block
+				backgroundColor = colAccent
+				color = colBg
 				attributes = tcell.AttrBold
 			} else {
-				// Other matches: soft purple highlight
-				backgroundColor = tcell.NewRGBColor(100, 100, 150)
-				color = tcell.ColorWhite
+				// Other matches: tmux mode-style highlight
+				backgroundColor, color, _ = highlightStyle.Decompose()
 				attributes = tcell.AttrNone
 			}
 		}
@@ -244,17 +244,17 @@ func drawStats(s statsSummary, t *tview.Table) {
 
 	for r := 0; r < rows; r++ {
 		for c := 0; c < cols; c++ {
-			color := tcell.ColorWhite
-			backgroundColor := tcell.ColorDefault
+			color := colText
+			backgroundColor := colBg
 
-			// Modern styling: alternate row colors for better readability
+			// Alternate row colors for better readability
 			if r%2 == 1 {
-				backgroundColor = tcell.NewRGBColor(20, 20, 30)
+				backgroundColor = colStripe
 			}
 
-			// Highlight stat labels with accent color
+			// Highlight stat labels with the accent color
 			if c == 0 {
-				color = tcell.NewRGBColor(100, 200, 255) // Soft blue for labels
+				color = colAccent
 			}
 
 			t.SetCell(r, c,
@@ -274,13 +274,11 @@ func drawUI(b *Buffer) error {
 	bufferTable.SetSelectable(true, true)
 	bufferTable.SetBorders(false)
 	bufferTable.SetSeparator(tview.Borders.Vertical)             // Add subtle vertical separators
-	bufferTable.SetBordersColor(tcell.NewRGBColor(60, 100, 140)) // Subtle blue borders
+	bufferTable.SetBordersColor(colBorder)
+	bufferTable.SetBackgroundColor(colBg)
 	bufferTable.SetFixed(b.rowFreeze, b.colFreeze)
 	bufferTable.Select(firstDataRow(b), 0)
-	bufferTable.SetSelectedStyle(tcell.Style{}.
-		Foreground(tcell.ColorWhite).
-		Background(tcell.NewRGBColor(80, 120, 160)). // Darker, muted blue
-		Attributes(tcell.AttrBold))
+	bufferTable.SetSelectedStyle(selectedStyle)
 
 	// Auto-detect and wrap long columns (sample first 100 rows, threshold 50 characters)
 	detectAndWrapLongColumns(b, 100, 50)
@@ -298,16 +296,17 @@ func drawUI(b *Buffer) error {
 
 	mainPage = tview.NewFrame(bufferTable).
 		SetBorders(0, 0, 0, 0, 0, 0)
+	mainPage.SetBackgroundColor(colBg)
 
 	// Add filter info strip at top if filter is active and cursor on filtered column
 	if filterInfoStr != "" {
-		mainPage.AddText(filterInfoStr, true, tview.AlignCenter, tcell.NewRGBColor(255, 140, 0))
+		mainPage.AddText(filterInfoStr, true, tview.AlignCenter, colAlert)
 	}
 
 	// Add main footer at bottom
-	mainPage.AddText(fileNameStr, false, tview.AlignLeft, tcell.NewRGBColor(255, 150, 50)).
-		AddText(statusMessage, false, tview.AlignCenter, tcell.NewRGBColor(100, 200, 255)).
-		AddText(cursorPosStr, false, tview.AlignRight, tcell.NewRGBColor(150, 255, 150))
+	mainPage.AddText(fileNameStr, false, tview.AlignLeft, colAccent).
+		AddText(statusMessage, false, tview.AlignCenter, colText).
+		AddText(cursorPosStr, false, tview.AlignRight, colDim)
 
 	drawFooterText := func(lstr, cstr, rstr string) {
 		statusMessage = cstr // Update global status
@@ -316,13 +315,13 @@ func drawUI(b *Buffer) error {
 		// Add filter info strip at top if filter is active and cursor on filtered column
 		filterInfoStr := buildFilterInfoStr(currentCursorColumn)
 		if filterInfoStr != "" {
-			mainPage.AddText(filterInfoStr, true, tview.AlignCenter, tcell.NewRGBColor(255, 140, 0))
+			mainPage.AddText(filterInfoStr, true, tview.AlignCenter, colAlert)
 		}
 
 		// Add main footer at bottom
-		mainPage.AddText(lstr, false, tview.AlignLeft, tcell.NewRGBColor(255, 150, 50)).
-			AddText(cstr, false, tview.AlignCenter, tcell.NewRGBColor(100, 200, 255)).
-			AddText(rstr, false, tview.AlignRight, tcell.NewRGBColor(150, 255, 150))
+		mainPage.AddText(lstr, false, tview.AlignLeft, colAccent).
+			AddText(cstr, false, tview.AlignCenter, colText).
+			AddText(rstr, false, tview.AlignRight, colDim)
 	}
 
 	//UI init - add pages to UI container
@@ -494,10 +493,6 @@ func drawUI(b *Buffer) error {
 				searchUseRegex = checked
 			})
 			form.AddCheckbox("Case Sensitive:", false, nil)
-			form.GetFormItem(1).(*tview.Checkbox).SetLabelColor(tcell.NewRGBColor(180, 220, 220))
-			form.GetFormItem(2).(*tview.Checkbox).SetLabelColor(tcell.NewRGBColor(180, 220, 220))
-			form.GetFormItem(1).(*tview.Checkbox).SetFieldBackgroundColor(tcell.NewRGBColor(80, 80, 100)).SetFieldTextColor(tcell.NewRGBColor(0, 255, 255))
-			form.GetFormItem(2).(*tview.Checkbox).SetFieldBackgroundColor(tcell.NewRGBColor(80, 80, 100)).SetFieldTextColor(tcell.NewRGBColor(0, 255, 255))
 
 			// Define search execution function to avoid duplication
 			executeSearch := func() {
@@ -542,21 +537,7 @@ func drawUI(b *Buffer) error {
 			title := " 🔍 Search - Tab to navigate, Enter to search, Esc to cancel "
 			form.SetTitle(title)
 			form.SetTitleAlign(tview.AlignCenter)
-			form.SetBorderColor(tcell.NewRGBColor(0, 200, 255)) // Bright Blue
-			form.SetBackgroundColor(tcell.NewRGBColor(20, 30, 40))
-			form.SetLabelColor(tcell.NewRGBColor(180, 220, 220))
-			form.SetFieldBackgroundColor(tcell.NewRGBColor(30, 40, 50))
-			form.SetFieldTextColor(tcell.ColorWhite)
-			form.SetButtonBackgroundColor(tcell.NewRGBColor(0, 200, 255))
-			form.SetButtonTextColor(tcell.ColorBlack)
-			searchButton := form.GetButton(0)
-			searchButton.SetActivatedStyle(tcell.Style{}.
-				Background(tcell.NewRGBColor(80, 120, 160)).
-				Foreground(tcell.ColorWhite))
-			cancelButton := form.GetButton(1)
-			cancelButton.SetActivatedStyle(tcell.Style{}.
-				Background(tcell.NewRGBColor(80, 120, 160)).
-				Foreground(tcell.ColorWhite))
+			styleForm(form)
 
 			// Handle Escape and Enter keys on form
 			form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -670,8 +651,6 @@ func drawUI(b *Buffer) error {
 			filterForm.AddCheckbox("Case Sensitive:", caseSensitive, func(checked bool) {
 				caseSensitive = checked
 			})
-			filterForm.GetFormItem(2).(*tview.Checkbox).SetLabelColor(tcell.NewRGBColor(180, 220, 220))
-			filterForm.GetFormItem(2).(*tview.Checkbox).SetFieldBackgroundColor(tcell.NewRGBColor(80, 80, 100)).SetFieldTextColor(tcell.NewRGBColor(0, 255, 255))
 
 			applyFilter := func() {
 				query = filterForm.GetFormItem(1).(*tview.InputField).GetText()
@@ -763,21 +742,7 @@ func drawUI(b *Buffer) error {
 			}
 			filterForm.SetTitle(filterTitle)
 			filterForm.SetTitleAlign(tview.AlignCenter)
-			filterForm.SetBorderColor(tcell.NewRGBColor(0, 200, 255)) // Bright Blue
-			filterForm.SetBackgroundColor(tcell.NewRGBColor(20, 30, 40))
-			filterForm.SetLabelColor(tcell.NewRGBColor(180, 220, 220))
-			filterForm.SetFieldBackgroundColor(tcell.NewRGBColor(30, 40, 50))
-			filterForm.SetFieldTextColor(tcell.ColorWhite)
-			filterForm.SetButtonBackgroundColor(tcell.NewRGBColor(0, 200, 255))
-			filterForm.SetButtonTextColor(tcell.ColorBlack)
-			filterButton := filterForm.GetButton(0)
-			filterButton.SetActivatedStyle(tcell.Style{}.
-				Background(tcell.NewRGBColor(80, 120, 160)).
-				Foreground(tcell.ColorWhite))
-			cancelButton := filterForm.GetButton(1)
-			cancelButton.SetActivatedStyle(tcell.Style{}.
-				Background(tcell.NewRGBColor(80, 120, 160)).
-				Foreground(tcell.ColorWhite))
+			styleForm(filterForm)
 
 			// Handle Escape and Enter keys on form
 			filterForm.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -1046,8 +1011,9 @@ func showHelpDialog() {
 	helpText.SetBorder(true)
 	helpText.SetTitle(" ❓ Help - Press ? or q or Esc to close ")
 	helpText.SetTitleAlign(tview.AlignCenter)
-	helpText.SetBorderColor(tcell.NewRGBColor(150, 100, 255))
-	helpText.SetBackgroundColor(tcell.NewRGBColor(10, 10, 20))
+	helpText.SetBorderColor(colAccent)
+	helpText.SetBackgroundColor(colBg)
+	helpText.SetTextColor(colText)
 
 	// Handle key events to close dialog
 	helpText.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -1128,7 +1094,9 @@ func showStatsDialog(statsS statsSummary, columnName string, colType int) {
 
 	// Create border with title and modern styling
 	statsTable.SetBorder(true)
-	statsTable.SetBorderColor(tcell.NewRGBColor(100, 200, 255))
+	statsTable.SetBorderColor(colAccent)
+	statsTable.SetBackgroundColor(colBg)
+	statsTable.SetSelectedStyle(highlightStyle)
 
 	typeName := type2name(colType)
 	title := fmt.Sprintf(" 📊 Statistics: %s [%s] ", columnName, typeName)
@@ -1149,7 +1117,9 @@ func showStatsDialog(statsS statsSummary, columnName string, colType int) {
 	plotView.SetBorder(true)
 	plotView.SetTitle(" 📈 Visual Distribution ")
 	plotView.SetTitleAlign(tview.AlignCenter)
-	plotView.SetBorderColor(tcell.NewRGBColor(255, 150, 50))
+	plotView.SetBorderColor(colDim)
+	plotView.SetBackgroundColor(colBg)
+	plotView.SetTextColor(colText)
 
 	// Create a flex layout with stats on left and plot on right
 	statsContent := tview.NewFlex().
@@ -1233,7 +1203,7 @@ func showStatsDialog(statsS statsSummary, columnName string, colType int) {
 			AddItem(tview.NewTextView().
 				SetText("Press q or Esc to close").
 				SetTextAlign(tview.AlignCenter).
-				SetTextColor(tcell.NewRGBColor(150, 150, 150)), 1, 0, false).
+				SetTextColor(colDim), 1, 0, false).
 			AddItem(nil, 0, 1, false), 0, 80, true).
 		AddItem(nil, 0, 1, false)
 

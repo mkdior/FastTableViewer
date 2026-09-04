@@ -59,102 +59,102 @@ func I2S(i int) string {
 }
 
 func getHelpContent() string {
-	helpContent := `[::b][yellow]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[white]
+	helpContent := `[` + hexDim + `]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[-:-:-]
 
-[::b][cyan]🚀 ftv - Fast Table Viewer[-][white]
+[::b][` + hexText + `]🚀 ftv - Fast Table Viewer[-:-:-]
 
-[::b][yellow]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[white]
+[` + hexDim + `]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[-:-:-]
 
-[::b][green]📖 Help Navigation[white]
-  [yellow]j/k[-]                 Scroll help text
-  [yellow]gg/G[-]                Jump to top/bottom
-  [yellow]Ctrl-d/u[-]            Page down/up
-  [yellow]? or q or Esc[-]       Close help dialog
+[::b][` + hexText + `]📖 Help Navigation[-:-:-]
+  [` + hexAccent + `]j/k[-]                 Scroll help text
+  [` + hexAccent + `]gg/G[-]                Jump to top/bottom
+  [` + hexAccent + `]Ctrl-d/u[-]            Page down/up
+  [` + hexAccent + `]? or q or Esc[-]       Close help dialog
 
-[::b][red]🚪 Quit[white]
-  [yellow]q[-]                   Quit application
-  [yellow]Esc[-]                 Close dialog or clear search
+[::b][` + hexText + `]🚪 Quit[-:-:-]
+  [` + hexAccent + `]q[-]                   Quit application
+  [` + hexAccent + `]Esc[-]                 Close dialog or clear search
 
-[::b][blue]⬆️ Movement[white]
-  [yellow]h[-]                   Move left ⬅️
-  [yellow]l[-]                   Move right ➡️
-  [yellow]j[-]                   Move down ⬇️
-  [yellow]k[-]                   Move up ⬆️
+[::b][` + hexText + `]⬆️ Movement[-:-:-]
+  [` + hexAccent + `]h[-]                   Move left ⬅️
+  [` + hexAccent + `]l[-]                   Move right ➡️
+  [` + hexAccent + `]j[-]                   Move down ⬇️
+  [` + hexAccent + `]k[-]                   Move up ⬆️
 
-  [yellow]w[-]                   Move to next column (word forward)
-  [yellow]b[-]                   Move to previous column (word backward)
+  [` + hexAccent + `]w[-]                   Move to next column (word forward)
+  [` + hexAccent + `]b[-]                   Move to previous column (word backward)
 
-  [yellow]gg[-]                  Go to first row (press g twice)
-  [yellow]G[-]                   Go to last row
+  [` + hexAccent + `]gg[-]                  Go to first row (press g twice)
+  [` + hexAccent + `]G[-]                   Go to last row
 
-  [yellow]0[-]                   Go to first column
-  [yellow]$[-]                   Go to last column
+  [` + hexAccent + `]0[-]                   Go to first column
+  [` + hexAccent + `]$[-]                   Go to last column
 
-  [yellow]Ctrl-d[-]              Page down (half page)
-  [yellow]Ctrl-u[-]              Page up (half page)
+  [` + hexAccent + `]Ctrl-d[-]              Page down (half page)
+  [` + hexAccent + `]Ctrl-u[-]              Page up (half page)
 
-  [yellow]N + motion[-]          Repeat a motion N times: 5j, 3l, 2w, 4n
-  [yellow]NG / Ngg[-]            Jump to row N
-  [yellow]N Ctrl-d/u[-]          Move N rows
+  [` + hexAccent + `]N + motion[-]          Repeat a motion N times: 5j, 3l, 2w, 4n
+  [` + hexAccent + `]NG / Ngg[-]            Jump to row N
+  [` + hexAccent + `]N Ctrl-d/u[-]          Move N rows
 
-[::b][cyan]🖱️  Mouse Support[white]
-  [yellow]Left Click[-]          Select cell
-  [yellow]Scroll Wheel[-]        Scroll up/down through rows
-  [yellow]Click Buttons[-]       Interact with dialogs and forms
+[::b][` + hexText + `]🖱️  Mouse Support[-:-:-]
+  [` + hexAccent + `]Left Click[-]          Select cell
+  [` + hexAccent + `]Scroll Wheel[-]        Scroll up/down through rows
+  [` + hexAccent + `]Click Buttons[-]       Interact with dialogs and forms
 
-[::b][magenta]🔍 Search[white]
-  [yellow]/[-]                   Search for text
+[::b][` + hexText + `]🔍 Search[-:-:-]
+  [` + hexAccent + `]/[-]                   Search for text
                     • Case-insensitive by default
-                    • Press [yellow]Tab[-] to navigate to checkbox
-                    • Press [yellow]Space[-] to toggle [yellow]Use Regex[-] option
-  [yellow]n[-]                   Next search result ⏭
-  [yellow]N[-]                   Previous search result ⏮
-  [yellow]Esc[-]                 Clear search highlighting
+                    • Press [` + hexAccent + `]Tab[-] to navigate to checkbox
+                    • Press [` + hexAccent + `]Space[-] to toggle [` + hexAccent + `]Use Regex[-] option
+  [` + hexAccent + `]n[-]                   Next search result ⏭
+  [` + hexAccent + `]N[-]                   Previous search result ⏮
+  [` + hexAccent + `]Esc[-]                 Clear search highlighting
 
-[::b][green]🎯 Regex Search Examples[white]
-  [yellow]^start[-]              Match at beginning of cell
-  [yellow]end$[-]                Match at end of cell
-  [yellow]\d+[-]                 Match digits (numbers)
-  [yellow]@.*\.com[-]            Match email pattern
-  [yellow]word1|word2[-]         Match either word (OR)
-  [yellow][A-Z]+[-]              Match uppercase letters
+[::b][` + hexText + `]🎯 Regex Search Examples[-:-:-]
+  [` + hexAccent + `]^start[-]              Match at beginning of cell
+  [` + hexAccent + `]end$[-]                Match at end of cell
+  [` + hexAccent + `]\d+[-]                 Match digits (numbers)
+  [` + hexAccent + `]@.*\.com[-]            Match email pattern
+  [` + hexAccent + `]word1|word2[-]         Match either word (OR)
+  [` + hexAccent + `][A-Z]+[-]              Match uppercase letters
 
-[::b][orange]🔎 Filter[white]
-  [yellow]f[-]                   Filter rows by current column value
+[::b][` + hexText + `]🔎 Filter[-:-:-]
+  [` + hexAccent + `]f[-]                   Filter rows by current column value
                     • Operators: contains, equals, starts/ends with, regex, >, <, >=, <=
                     • Apply filters to multiple columns (combined with AND)
                     • Edit filter: press f on filtered column
-  [yellow]r[-]                   Remove filter from current column
+  [` + hexAccent + `]r[-]                   Remove filter from current column
 
-[::b][purple]🏷️  Data Type[white]
-  [yellow]t[-]                   Toggle column data type
+[::b][` + hexText + `]🏷️  Data Type[-:-:-]
+  [` + hexAccent + `]t[-]                   Toggle column data type
                     (String → Number → Date → String)
 
-[::b][green]🔃 Sort[white]
-  [yellow]s[-]                   Sort data by column (ascending ⬆️)
-  [yellow]S[-]                   Sort data by column (descending ⬇️)
+[::b][` + hexText + `]🔃 Sort[-:-:-]
+  [` + hexAccent + `]s[-]                   Sort data by column (ascending ⬆️)
+  [` + hexAccent + `]S[-]                   Sort data by column (descending ⬇️)
 
-[::b][cyan]📏 Text Wrapping[white]
-  [yellow]W[-]                   Toggle width limit for current column (50 chars)
+[::b][` + hexText + `]📏 Text Wrapping[-:-:-]
+  [` + hexAccent + `]W[-]                   Toggle width limit for current column (50 chars)
                     Long columns (>50 chars) are limited automatically
 
-[::b][blue]📊 Stats[white]
-  [yellow]i[-]                   Show stats info for current column
+[::b][` + hexText + `]📊 Stats[-:-:-]
+  [` + hexAccent + `]i[-]                   Show stats info for current column
 
-[::b][yellow]❓ Help[white]
-  [yellow]?[-]                   Show this help dialog
+[::b][` + hexText + `]❓ Help[-:-:-]
+  [` + hexAccent + `]?[-]                   Show this help dialog
 
-[::b][yellow]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[white]
+[` + hexDim + `]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[-:-:-]
 
-[::b][green]💡 Pro Tips:[white]
-  • Press [yellow]gg[-] to jump to the top of any table
-  • Use [yellow]/[-] for quick searching across all cells
-  • Enable [yellow]regex[-] mode for powerful pattern matching
-  • Press [yellow]i[-] to see detailed statistics for any column
-  • Use [yellow]f[-] on multiple columns to combine filters
+[::b][` + hexText + `]💡 Pro Tips:[-:-:-]
+  • Press [` + hexAccent + `]gg[-] to jump to the top of any table
+  • Use [` + hexAccent + `]/[-] for quick searching across all cells
+  • Enable [` + hexAccent + `]regex[-] mode for powerful pattern matching
+  • Press [` + hexAccent + `]i[-] to see detailed statistics for any column
+  • Use [` + hexAccent + `]f[-] on multiple columns to combine filters
   • Headers are frozen by default for easy navigation
 
-[::b][yellow]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[white]
+[` + hexDim + `]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[-:-:-]
 `
 	return helpContent
 }
