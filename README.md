@@ -6,19 +6,9 @@
 [![GitHub license](https://img.shields.io/github/license/mkdior/terminal-table-viewer.svg)](https://github.com/mkdior/terminal-table-viewer/blob/main/LICENSE)
 [![GitHub release](https://img.shields.io/github/release/mkdior/terminal-table-viewer.svg)](https://github.com/mkdior/terminal-table-viewer/releases)
 
-<p align="center">
-   <img src="assets/icon_transparent.png"  style="width:200px;" alt="ttv icon"/>
-</p>
-
 TTV continues the work originally created by Xiuqiang (Stephen) Chen
 ([@codechenx](https://github.com/codechenx)). This repository continues that
 work after the original project went unmaintained. See [Credits](#credits).
-
-## Demo
-
-Recorded by the original author on an earlier version:
-
-[![asciicast](https://asciinema.org/a/C1MPA6TB5h68NYYJXogCigSr2.svg)](https://asciinema.org/a/C1MPA6TB5h68NYYJXogCigSr2)
 
 ## Table of Contents
 
@@ -576,15 +566,13 @@ cmd/ttv: the executable; holds the build version and calls the app
 internal/app: the application: loaders, the table model with filters and
     sorting, statistics and the tview user interface
 internal/app/testdata: fixture files used by the tests
-assets: icon files
 
 ## Credits
 
 TTV is a continuation of work created by Xiuqiang (Stephen) Chen
 ([@codechenx](https://github.com/codechenx)) and originally published at
 https://github.com/codechenx/FastTableViewer under the Apache License 2.0.
-The icon, the demo recording and the bulk of the design are his work. This
-repository continues the project with the full original commit history
+This repository continues the project with the full original commit history
 preserved; see [NOTICE](NOTICE) for the attribution notice.
 
 ## License
