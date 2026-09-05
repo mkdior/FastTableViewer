@@ -442,7 +442,7 @@ ttv peaks.bed --skip-prefix "track","browser" # BED with headers
 ```bash
 ttv app.log -n 1000                            # first 1000 lines only
 ttv data.csv --hide-columns 2,4                # hide sensitive columns
-git log --pretty=format:"%h,%an,%ar,%s" | ttv -s ","
+git log --pretty=format:'%h%x09%an%x09%ar%x09%s' | ttv
 cat data.json | jq -r '.[] | [.id, .name, .value] | @csv' | ttv
 ttv data.txt -s ";"                            # semicolon-delimited
 ```
