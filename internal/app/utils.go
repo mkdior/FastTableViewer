@@ -74,7 +74,7 @@ func getHelpContent() string {
 	}
 
 	var sb strings.Builder
-	sb.WriteString(rule + "\n\n" + head("ftv - Fast Table Viewer") + "\n\n" + rule + "\n\n")
+	sb.WriteString(rule + "\n\n" + head("ttv - Terminal Table Viewer") + "\n\n" + rule + "\n\n")
 
 	sb.WriteString(head("Help Navigation") + "\n")
 	sb.WriteString(entry("j/k", "Scroll help text"))
@@ -127,7 +127,7 @@ func getHelpContent() string {
 	sb.WriteString(head("Tips") + "\n")
 	sb.WriteString("  Long cells are cut at 50 characters; a cut cell shows its full value\n")
 	sb.WriteString("  in a floating box while selected. Keys can be changed in the config\n")
-	sb.WriteString("  file; see ftv --dump-config for the defaults.\n\n")
+	sb.WriteString("  file; see ttv --dump-config for the defaults.\n\n")
 	sb.WriteString(rule + "\n")
 	return sb.String()
 }

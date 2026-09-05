@@ -1,4 +1,4 @@
-// Package app implements the ftv terminal table viewer: loading, the table
+// Package app implements the TTV terminal table viewer: loading, the table
 // model with filters and sorting, statistics and the tview user interface.
 package app
 
@@ -164,15 +164,15 @@ func loadAndDisplaySync(loader func(*Buffer) error, source string) error {
 	return runApp()
 }
 
-// Execute runs the ftv command line. version is the build version shown by
-// --version; the cmd/ftv entrypoint supplies it.
+// Execute runs the ttv command line. version is the build version shown by
+// --version; the cmd/ttv entrypoint supplies it.
 func Execute(version string) {
 	initView()
 	args.setDefault()
 	RootCmd := &cobra.Command{
-		Use:     "ftv {File_Name}",
+		Use:     "ttv {File_Name}",
 		Version: version,
-		Short:   "Fast table viewer for delimited file in terminal",
+		Short:   "Terminal table viewer for delimited file in terminal",
 		Run: func(cmd *cobra.Command, cmdargs []string) {
 			if args.Sep == "\\t" {
 				args.Sep = "	"
@@ -275,7 +275,7 @@ func Execute(version string) {
 	RootCmd.Flags().BoolVar(&args.AsyncLoad, "async", true, "Progressive rendering while loading")
 	RootCmd.Flags().IntVarP(&args.MemoryMB, "memory", "m", 0, "Memory limit in MB (0=unlimited/default, >0=set limit)")
 	RootCmd.Flags().StringVar(&args.Theme, "theme", "", "Colour scheme: "+strings.Join(themeNames(), ", ")+" (default from config, else "+defaultThemeName+")")
-	RootCmd.Flags().StringVar(&args.ConfigPath, "config", "", "Config file (default ~/.config/ftv/config.toml)")
+	RootCmd.Flags().StringVar(&args.ConfigPath, "config", "", "Config file (default ~/.config/ttv/config.toml)")
 	RootCmd.Flags().BoolVar(&args.DumpConfig, "dump-config", false, "Print the default config file and exit")
 	RootCmd.Flags().SortFlags = false
 	err := RootCmd.Execute()

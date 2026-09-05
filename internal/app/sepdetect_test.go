@@ -301,7 +301,7 @@ func TestSepDetect_RaggedAndCompetingCandidates(t *testing.T) {
 		{"quoted commas with a time column keep comma", []string{"t,msg", "12:00,\"a, b\"", "12:05,c", "12:10,d"}, ','},
 		{"ragged commas", []string{"A,B,C,D", "1,2,3,4", "5,6,7", "8,9,10,11", "12,13,14,15"}, ','},
 		{"mixed delimiters on every line is undetectable", []string{"Name,Age,City", "Alice|30|NYC", "Bob\t25\tLA"}, 0},
-		{"space separated command output", []string{"USER PID %CPU COMMAND", "root 1 0.0 /sbin/init", "xcore 42 1.5 vim", "xcore 43 0.0 ftv"}, ' '},
+		{"space separated command output", []string{"USER PID %CPU COMMAND", "root 1 0.0 /sbin/init", "xcore 42 1.5 vim", "xcore 43 0.0 ttv"}, ' '},
 		{"semicolons inside quoted fields do not win", []string{`"name;label;kind",value`, `"a;b;c",1`, `"d;e;f",2`}, ','},
 		{"quoted commas in a semicolon file", []string{`"a,b";c;d`, `"e,f";g;h`}, ';'},
 		{"an unbalanced quote does not hide the delimiter", []string{`height,note`, `5'10",tall`, `6'0",taller`}, ','},

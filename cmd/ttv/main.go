@@ -1,7 +1,7 @@
-// Command ftv is a fast table viewer for delimited files in the terminal.
+// Command ttv is a fast table viewer for delimited files in the terminal.
 package main
 
-import "github.com/mkdior/FastTableViewer/internal/app"
+import "github.com/mkdior/terminal-table-viewer/internal/app"
 
 // version is the release version; overridden at build time with
 // -ldflags "-X main.version=...".

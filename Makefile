@@ -1,6 +1,6 @@
 .PHONY: all build clean test lint install uninstall release snapshot help
 
-BINARY_NAME=ftv
+BINARY_NAME=ttv
 INSTALL_PATH=/usr/local/bin
 VERSION?=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 LDFLAGS=-ldflags="-s -w -X main.version=$(VERSION)"
@@ -10,7 +10,7 @@ all: build
 ## build: Build the binary
 build:
 	@echo "Building $(BINARY_NAME)..."
-	@go build $(LDFLAGS) -o $(BINARY_NAME) ./cmd/ftv
+	@go build $(LDFLAGS) -o $(BINARY_NAME) ./cmd/ttv
 
 ## clean: Remove build artifacts
 clean:
@@ -67,10 +67,10 @@ deps:
 ## check: Run tests and linters
 check: test lint
 
-## version: Update the fallback version in cmd/ftv/main.go (usage: make version VERSION=x.y.z)
+## version: Update the fallback version in cmd/ttv/main.go (usage: make version VERSION=x.y.z)
 version:
 	@echo "Updating version to $(VERSION)..."
-	@sed -i.bak 's/^var version = ".*"/var version = "$(VERSION)"/' cmd/ftv/main.go && rm -f cmd/ftv/main.go.bak
+	@sed -i.bak 's/^var version = ".*"/var version = "$(VERSION)"/' cmd/ttv/main.go && rm -f cmd/ttv/main.go.bak
 
 ## help: Show this help message
 help:

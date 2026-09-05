@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -e
 
-# ftv installer script
+# ttv installer script
 # Automatically detects platform and installs the latest release
 
 get_latest_release() {
-    curl --silent "https://api.github.com/repos/mkdior/FastTableViewer/releases/latest" |
+    curl --silent "https://api.github.com/repos/mkdior/terminal-table-viewer/releases/latest" |
         grep '"tag_name":' |
         sed -E 's/.*"v([^"]+)".*/\1/'
 }
@@ -34,13 +34,13 @@ detect_platform() {
 }
 
 main() {
-    echo "ftv installer"
+    echo "ttv installer"
     echo "============="
     echo
     
-    # Check if ftv already exists
-    if [ -f "$PWD/ftv" ]; then
-        echo "Error: ftv already exists in current directory" >&2
+    # Check if ttv already exists
+    if [ -f "$PWD/ttv" ]; then
+        echo "Error: ttv already exists in current directory" >&2
         echo "Please remove it first or install to a different location" >&2
         exit 1
     fi
@@ -59,8 +59,8 @@ main() {
     echo "Latest version: v$version"
     
     # Construct download URL
-    filename="ftv_${version}_${platform}.tar.gz"
-    url="https://github.com/mkdior/FastTableViewer/releases/download/v${version}/${filename}"
+    filename="ttv_${version}_${platform}.tar.gz"
+    url="https://github.com/mkdior/terminal-table-viewer/releases/download/v${version}/${filename}"
     
     echo "Downloading: $url"
     
@@ -75,14 +75,14 @@ main() {
     fi
     
     # Move binary to current directory
-    mv "$tmp_dir/ftv" "$PWD/ftv"
-    chmod +x "$PWD/ftv"
+    mv "$tmp_dir/ttv" "$PWD/ttv"
+    chmod +x "$PWD/ttv"
     
     echo
-    echo "Successfully installed ftv to: $PWD/ftv"
+    echo "Successfully installed ttv to: $PWD/ttv"
     echo
     echo "To make it globally accessible, run:"
-    echo "  sudo mv ftv /usr/local/bin/"
+    echo "  sudo mv ttv /usr/local/bin/"
     echo
     echo "Or add the current directory to your PATH:"
     echo "  export PATH=\"\$PATH:$PWD\""

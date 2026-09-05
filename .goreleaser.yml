@@ -1,6 +1,6 @@
 version: 2
 
-project_name: ftv
+project_name: ttv
 
 before:
   hooks:
@@ -8,8 +8,8 @@ before:
     - go mod tidy
 
 builds:
-  - binary: ftv
-    main: ./cmd/ftv
+  - binary: ttv
+    main: ./cmd/ttv
     env:
       - CGO_ENABLED=0
     goos:
@@ -65,17 +65,17 @@ changelog:
 
 release:
   header: |
-    Download the archive for your platform below, extract it and put `ftv` on
+    Download the archive for your platform below, extract it and put `ttv` on
     your `PATH` (for example `/usr/local/bin` or `~/.local/bin`); see the
-    [README](https://github.com/mkdior/FastTableViewer#manual-download) for
+    [README](https://github.com/mkdior/terminal-table-viewer#manual-download) for
     details. `checksums.txt` holds the SHA-256 sum of every asset.
   footer: |
-    {{ with .PreviousTag }}Full diff: https://github.com/mkdior/FastTableViewer/compare/{{ . }}...{{ $.Tag }}{{ end }}
+    {{ with .PreviousTag }}Full diff: https://github.com/mkdior/terminal-table-viewer/compare/{{ . }}...{{ $.Tag }}{{ end }}
 
 nfpms:
   - maintainer: mkdior
-    description: "Fast, feature-rich CSV/TSV/delimited file viewer for the command line"
-    homepage: https://github.com/mkdior/FastTableViewer
+    description: "Terminal Table Viewer (TTV) - fast, feature-rich CSV/TSV/delimited file viewer for the command line"
+    homepage: https://github.com/mkdior/terminal-table-viewer
     license: Apache-2.0
     formats:
       - deb

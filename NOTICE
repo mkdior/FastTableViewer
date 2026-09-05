@@ -1,4 +1,4 @@
-FastTableViewer (ftv)
+Terminal Table Viewer (TTV)
 
 Copyright 2019-2025 Xiuqiang (Stephen) Chen (codechenx)
 Copyright 2026 mkdior
@@ -7,6 +7,6 @@ This product was created by Xiuqiang (Stephen) Chen and originally published
 at https://github.com/codechenx/FastTableViewer under the Apache License,
 Version 2.0. This repository continues that work with the original commit
 history preserved. Changes made after the takeover are recorded in the git
-history of https://github.com/mkdior/FastTableViewer.
+history of https://github.com/mkdior/terminal-table-viewer.
 
 Licensed under the Apache License, Version 2.0. See the LICENSE file.

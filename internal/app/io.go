@@ -13,7 +13,7 @@ import (
 )
 
 // errSeparatorNotDetected is returned when no delimiter could be inferred from the input.
-const errSeparatorNotDetected = "ftv cannot identify the separator; set it manually with -s"
+const errSeparatorNotDetected = "ttv cannot identify the separator; set it manually with -s"
 
 // progressTracker helps display loading progress
 type progressTracker struct {

@@ -1,16 +1,16 @@
-# ftv: Fast Table Viewer for the terminal
+# ttv: Terminal Table Viewer (TTV)
 
 **A fast, feature-rich CSV/TSV/delimited file viewer for the command line**
 
-[![test](https://github.com/mkdior/FastTableViewer/actions/workflows/test.yml/badge.svg)](https://github.com/mkdior/FastTableViewer/actions/workflows/test.yml)
-[![GitHub license](https://img.shields.io/github/license/mkdior/FastTableViewer.svg)](https://github.com/mkdior/FastTableViewer/blob/main/LICENSE)
-[![GitHub release](https://img.shields.io/github/release/mkdior/FastTableViewer.svg)](https://github.com/mkdior/FastTableViewer/releases)
+[![test](https://github.com/mkdior/terminal-table-viewer/actions/workflows/test.yml/badge.svg)](https://github.com/mkdior/terminal-table-viewer/actions/workflows/test.yml)
+[![GitHub license](https://img.shields.io/github/license/mkdior/terminal-table-viewer.svg)](https://github.com/mkdior/terminal-table-viewer/blob/main/LICENSE)
+[![GitHub release](https://img.shields.io/github/release/mkdior/terminal-table-viewer.svg)](https://github.com/mkdior/terminal-table-viewer/releases)
 
 <p align="center">
-   <img src="assets/icon_transparent.png"  style="width:200px;" alt="ftv icon"/>
+   <img src="assets/icon_transparent.png"  style="width:200px;" alt="ttv icon"/>
 </p>
 
-ftv was created by Xiuqiang (Stephen) Chen
+TTV continues the work originally created by Xiuqiang (Stephen) Chen
 ([@codechenx](https://github.com/codechenx)). This repository continues that
 work after the original project went unmaintained. See [Credits](#credits).
 
@@ -36,7 +36,7 @@ Recorded by the original author on an earlier version:
 
 ## Features
 
-ftv brings spreadsheet-like functionality to your terminal with vim-inspired
+TTV brings spreadsheet-like functionality to your terminal with vim-inspired
 controls.
 
 - **Spreadsheet interface**: navigate tabular data with frozen headers
@@ -68,37 +68,37 @@ controls.
 Downloads the latest release for your platform into the current directory:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/mkdior/FastTableViewer/main/install.sh | bash
-sudo mv ftv /usr/local/bin/
+curl -sSL https://raw.githubusercontent.com/mkdior/terminal-table-viewer/main/install.sh | bash
+sudo mv ttv /usr/local/bin/
 ```
 
 ### Manual download
 
 Every tagged release on the
-[releases page](https://github.com/mkdior/FastTableViewer/releases) ships a
+[releases page](https://github.com/mkdior/terminal-table-viewer/releases) ships a
 single static binary per platform, built by the `release` GitHub Actions
 workflow:
 
-- Archives named `ftv_<version>_<OS>_<arch>.tar.gz` (`.zip` on Windows) for
+- Archives named `ttv_<version>_<OS>_<arch>.tar.gz` (`.zip` on Windows) for
   Linux (x86_64, arm64, armv7, i386), macOS (Intel, Apple Silicon) and
-  Windows (x86_64, i386), each containing the `ftv` binary, LICENSE and
+  Windows (x86_64, i386), each containing the `ttv` binary, LICENSE and
   README
 - `.deb` and `.rpm` packages for Linux
 - `checksums.txt` with SHA-256 sums of every asset
 
-Pick the archive for your system, extract it and put `ftv` somewhere on your
+Pick the archive for your system, extract it and put `ttv` somewhere on your
 `PATH`. For example, on Linux x86_64 (adjust the version and platform):
 
 ```bash
 VERSION=0.9.0
-curl -LO https://github.com/mkdior/FastTableViewer/releases/download/v${VERSION}/ftv_${VERSION}_Linux_x86_64.tar.gz
-tar -xzf ftv_${VERSION}_Linux_x86_64.tar.gz ftv
+curl -LO https://github.com/mkdior/terminal-table-viewer/releases/download/v${VERSION}/ttv_${VERSION}_Linux_x86_64.tar.gz
+tar -xzf ttv_${VERSION}_Linux_x86_64.tar.gz ttv
 
 # system-wide
-sudo install -m 755 ftv /usr/local/bin/ftv
+sudo install -m 755 ttv /usr/local/bin/ttv
 
 # or just for your user (make sure ~/.local/bin is on your PATH)
-install -D -m 755 ftv ~/.local/bin/ftv
+install -D -m 755 ttv ~/.local/bin/ttv
 ```
 
 Platform strings: `Linux_x86_64`, `Linux_arm64`, `Linux_armv7`,
@@ -106,19 +106,19 @@ Platform strings: `Linux_x86_64`, `Linux_arm64`, `Linux_armv7`,
 `Windows_i386.zip`.
 
 On macOS, Gatekeeper may block an unsigned binary the first time; run
-`xattr -d com.apple.quarantine ftv` before installing it.
+`xattr -d com.apple.quarantine ttv` before installing it.
 
 Packages:
 
 ```bash
-sudo dpkg -i ftv_*.deb      # Debian/Ubuntu
-sudo rpm -i ftv-*.rpm       # Fedora/CentOS/RHEL
+sudo dpkg -i ttv_*.deb      # Debian/Ubuntu
+sudo rpm -i ttv-*.rpm       # Fedora/CentOS/RHEL
 ```
 
 ### Go install
 
 ```bash
-go install github.com/mkdior/FastTableViewer/cmd/ftv@latest
+go install github.com/mkdior/terminal-table-viewer/cmd/ttv@latest
 ```
 
 ### Build from source
@@ -126,26 +126,26 @@ go install github.com/mkdior/FastTableViewer/cmd/ftv@latest
 Requires Go 1.25 or later:
 
 ```bash
-git clone https://github.com/mkdior/FastTableViewer.git
-cd FastTableViewer
-make build        # produces ./ftv with the version stamped from git
+git clone https://github.com/mkdior/terminal-table-viewer.git
+cd terminal-table-viewer
+make build        # produces ./ttv with the version stamped from git
 ```
 
 ## Quick Start
 
 ```bash
-ftv data.csv                       # view a CSV file
-ftv data.tsv                       # view a TSV file
-cat data.csv | ftv                 # read from stdin
-ps aux | ftv                       # any whitespace-delimited output
-ftv data.txt -s "|"                # custom delimiter
-ftv data.csv --columns 1,3,5       # only some columns
-ftv file.vcf --skip-prefix "##"    # skip metadata lines
+ttv data.csv                       # view a CSV file
+ttv data.tsv                       # view a TSV file
+cat data.csv | ttv                 # read from stdin
+ps aux | ttv                       # any whitespace-delimited output
+ttv data.txt -s "|"                # custom delimiter
+ttv data.csv --columns 1,3,5       # only some columns
+ttv file.vcf --skip-prefix "##"    # skip metadata lines
 ```
 
 ## Command Line Flags
 
-Syntax: `ftv [FILE] [flags]`
+Syntax: `ttv [FILE] [flags]`
 
 ### --separator
 
@@ -215,7 +215,7 @@ Effect: selects the colours the table, footer and dialogs use; the list of
 ### --config
 
 Argument: path to a config file
-Default: `~/.config/ftv/config.toml` (`$XDG_CONFIG_HOME/ftv/config.toml`)
+Default: `~/.config/ttv/config.toml` (`$XDG_CONFIG_HOME/ttv/config.toml`)
 Effect: loads key bindings and colours; a missing default file is ignored, a
     missing named file is an error
 
@@ -302,7 +302,7 @@ footer says so and the rows loaded so far remain fully usable.
 
 ### Data types and sorting
 
-ftv samples each column after loading and classifies it as String, Number or
+TTV samples each column after loading and classifies it as String, Number or
 Date when at least 90% of the sampled non-empty cells fit. Press `t` to cycle
 the type by hand, then `s` or `S` to sort.
 
@@ -337,7 +337,7 @@ and the dialog title says so.
 
 Plain text search is a case-insensitive substring match unless
 `Case Sensitive` is checked. Regex search uses Go regular expression syntax
-and is case-insensitive unless `Case Sensitive` is checked (ftv prepends
+and is case-insensitive unless `Case Sensitive` is checked (TTV prepends
 `(?i)` for you). The current match is highlighted in cyan, other matches in
 grey, and the footer shows the position such as `Match 3/12`.
 
@@ -391,7 +391,7 @@ the unique filters last, so duplicates are removed from the rows that match.
 Rows and blocks are tab-separated with one line per row, so they paste
 straight into a spreadsheet or a shell. Yanks over 50MB are refused.
 
-ftv detects the clipboard of the system it runs on and also sends the OSC 52
+TTV detects the clipboard of the system it runs on and also sends the OSC 52
 terminal escape (tmux forwards it when `set -g set-clipboard on` is set;
 payloads over 1MB skip it). The footer reports which channels were used.
 
@@ -440,27 +440,27 @@ not previewed.
 ### Bioinformatics formats
 
 ```bash
-ftv sample.vcf --skip-prefix "##"             # VCF, also works on .vcf.gz
-ftv otu_table.txt --skip-prefix "# "          # QIIME OTU tables
-ftv mutations.maf --skip-prefix "#"           # MAF
-ftv intervals.interval_list --skip-prefix "@" # SAM-style headers
-ftv peaks.bed --skip-prefix "track","browser" # BED with headers
+ttv sample.vcf --skip-prefix "##"             # VCF, also works on .vcf.gz
+ttv otu_table.txt --skip-prefix "# "          # QIIME OTU tables
+ttv mutations.maf --skip-prefix "#"           # MAF
+ttv intervals.interval_list --skip-prefix "@" # SAM-style headers
+ttv peaks.bed --skip-prefix "track","browser" # BED with headers
 ```
 
 ### Everyday use
 
 ```bash
-ftv app.log -n 1000                            # first 1000 lines only
-ftv data.csv --hide-columns 2,4                # hide sensitive columns
-git log --pretty=format:"%h,%an,%ar,%s" | ftv -s ","
-cat data.json | jq -r '.[] | [.id, .name, .value] | @csv' | ftv
-ftv data.txt -s ";"                            # semicolon-delimited
+ttv app.log -n 1000                            # first 1000 lines only
+ttv data.csv --hide-columns 2,4                # hide sensitive columns
+git log --pretty=format:"%h,%an,%ar,%s" | ttv -s ","
+cat data.json | jq -r '.[] | [.id, .name, .value] | @csv' | ttv
+ttv data.txt -s ";"                            # semicolon-delimited
 ```
 
 ## Configuration
 
-ftv reads `~/.config/ftv/config.toml` if it exists (or the file named with
-`--config`). `ftv --dump-config` prints the defaults with comments; save that
+TTV reads `~/.config/ttv/config.toml` if it exists (or the file named with
+`--config`). `ttv --dump-config` prints the defaults with comments; save that
 output as the config file and edit what you want to change.
 
 ### [keys]
@@ -536,14 +536,14 @@ osc52   = false
 
 ## Large Files
 
-ftv keeps every cell in memory. A file of a few hundred MB works well; a
+TTV keeps every cell in memory. A file of a few hundred MB works well; a
 multi-GB file needs several times its size in RAM and will exhaust memory
 without a limit. For very large inputs today:
 
-- `ftv big.csv -m 2048` loads until roughly 2GB of estimated cell data and
+- `ttv big.csv -m 2048` loads until roughly 2GB of estimated cell data and
   keeps that much viewable
-- `ftv big.csv -n 1000000` loads the first million lines
-- `ftv big.csv --skip-lines 5000000 -n 1000000` looks at a window further in
+- `ttv big.csv -n 1000000` loads the first million lines
+- `ttv big.csv --skip-lines 5000000 -n 1000000` looks at a window further in
 
 A streaming design that indexes row offsets on disk and loads only the visible
 window is the planned next step and would lift this limit.
@@ -551,7 +551,7 @@ window is the planned next step and would lift this limit.
 ## Development
 
 ```bash
-make build     # build ./ftv
+make build     # build ./ttv
 make test      # go test -race with coverage
 make lint      # golangci-lint (must be installed)
 make snapshot  # local goreleaser dry run (goreleaser must be installed)
@@ -572,7 +572,7 @@ scheme, in the `[theme]` section of the config file without touching code.
 
 ### Layout
 
-cmd/ftv: the executable; holds the build version and calls the app
+cmd/ttv: the executable; holds the build version and calls the app
 internal/app: the application: loaders, the table model with filters and
     sorting, statistics and the tview user interface
 internal/app/testdata: fixture files used by the tests
@@ -580,7 +580,7 @@ assets: icon files
 
 ## Credits
 
-ftv was created by Xiuqiang (Stephen) Chen
+TTV is a continuation of work created by Xiuqiang (Stephen) Chen
 ([@codechenx](https://github.com/codechenx)) and originally published at
 https://github.com/codechenx/FastTableViewer under the Apache License 2.0.
 The icon, the demo recording and the bulk of the design are his work. This

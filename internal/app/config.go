@@ -64,13 +64,13 @@ func (k *keyList) UnmarshalTOML(data any) error {
 	return nil
 }
 
-// defaultConfigPath is ~/.config/ftv/config.toml, honouring XDG_CONFIG_HOME.
+// defaultConfigPath is ~/.config/ttv/config.toml, honouring XDG_CONFIG_HOME.
 func defaultConfigPath() string {
 	dir, err := os.UserConfigDir()
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(dir, "ftv", "config.toml")
+	return filepath.Join(dir, "ttv", "config.toml")
 }
 
 // loadConfig reads path. A missing file is not an error unless explicit is
@@ -201,7 +201,7 @@ func colorSpec(c tcell.Color) string {
 // be saved as the config file and edited.
 func dumpConfig(w io.Writer) error {
 	var sb strings.Builder
-	sb.WriteString("# ftv configuration. Save as " + defaultConfigPath() + " and edit.\n")
+	sb.WriteString("# ttv configuration. Save as " + defaultConfigPath() + " and edit.\n")
 	sb.WriteString("# Keys: a single character (\"h\", \"G\", \"$\"), a name (esc, enter, tab, space,\n")
 	sb.WriteString("# left, right, up, down, home, end, pgup, pgdn, f1-f12) or a modifier form\n")
 	sb.WriteString("# (ctrl+d, alt+x, shift+v). A list binds several keys; a quoted sequence such\n")
@@ -223,7 +223,7 @@ func dumpConfig(w io.Writer) error {
 	for _, role := range themeRoleNames {
 		fmt.Fprintf(&sb, "%-11s = %q\n", role, colorSpec(*roles[role]))
 	}
-	sb.WriteString("\n# Clipboard: by default ftv detects the system (Windows and WSL, macOS, Wayland,\n")
+	sb.WriteString("\n# Clipboard: by default ttv detects the system (Windows and WSL, macOS, Wayland,\n")
 	sb.WriteString("# X11, Termux) and also sends the OSC 52 escape. command replaces the detection\n")
 	sb.WriteString("# with a program that reads the text on stdin, e.g. \"xclip -selection clipboard\".\n\n")
 	sb.WriteString("[clipboard]\n")

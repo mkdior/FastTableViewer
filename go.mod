@@ -1,4 +1,4 @@
-module github.com/mkdior/FastTableViewer
+module github.com/mkdior/terminal-table-viewer
 
 go 1.25.0
 
